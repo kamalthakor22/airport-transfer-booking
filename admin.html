@@ -11,3 +11,26 @@
   </thead>
   <tbody></tbody>
 </table>
+
+<!-- Edit Booking Modal -->
+<div id="editModal" style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%);
+    background:#fff; border:1px solid #ccc; padding:20px; z-index:1000; width:300px;">
+  <h3>Edit Booking</h3>
+  <form id="editForm">
+    <input type="hidden" id="editId">
+    <label>Name:</label><br>
+    <input type="text" id="editName" required><br><br>
+    <label>Email:</label><br>
+    <input type="email" id="editEmail" required><br><br>
+    <label>Pickup:</label><br>
+    <input type="text" id="editPickup" required><br><br>
+    <label>Dropoff:</label><br>
+    <input type="text" id="editDropoff" required><br><br>
+    <button type="submit">Save</button>
+    <button type="button" onclick="closeModal()">Cancel</button>
+  </form>
+</div>
+
+<!-- Overlay -->
+<div id="overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.5); z-index:999;" onclick="closeModal()"></div>
