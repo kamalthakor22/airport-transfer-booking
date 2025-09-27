@@ -1,12 +1,11 @@
-// app.js (must be type="module")
+// app.js (load with <script type="module" src="app.js"></script>)
 
-// Import Firebase SDK functions
+// ----- Firebase imports -----
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getDocs, collection, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-// 🔑 Firebase Config (replace with your real one)
+// ----- Firebase config -----
 const firebaseConfig = {
   apiKey: "AIzaSyBA4r1N4L_GwTrVrKku3lFYuj1gZIy-45w",
   authDomain: "ajaxairporttransfer.firebaseapp.com",
@@ -16,59 +15,82 @@ const firebaseConfig = {
   appId: "1:664561343575:web:3132b18dfa6ba41118d712"
 };
 
-// Initialize Firebase
+// ----- Initialize Firebase -----
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Handle form submit
-document.getElementById("bookingForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
+// ======= CUSTOMER BOOKING FORM =======
+const bookingForm = document.getElementById('bookingForm');
+if (bookingForm) {
+  bookingForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  const name = document.getElementById("name").value;
-  const email = document.getElementById("email").value;
-  const pickup = document.getElementById("pickup").value;
-  const dropoff = document.getElementById("dropoff").value;
-
-  try {
-    await addDoc(collection(db, "bookings"), {
-      name,
-      email,
-      pickup,
-      dropoff,
+    const booking = {
+      name: document.getElementById('name').value,
+      email: document.getElementById('email').value,
+      phone: document.getElementById('phone').value,
+      pickup: document.getElementById('pickup').value,
+      dropoff: document.getElementById('dropoff').value,
+      datetime: document.getElementById('datetime').value,
+      tripType: document.getElementById('tripType').value,
+      referral: document.getElementById('referral').value,
+      notes: document.getElementById('notes').value,
       timestamp: new Date()
-    });
-    alert("Booking saved successfully!");
-    e.target.reset();
-  } catch (err) {
-    console.error("Error adding booking:", err);
-    alert("Failed to save booking.");
-  }
-});
+    };
 
-// Example Admin Login
-async function adminLogin(email, password) {
-  try {
-    const userCred = await signInWithEmailAndPassword(auth, email, password);
-    console.log("Admin logged in:", userCred.user);
-  } catch (err) {
-    console.error("Login error:", err.message);
-  }
+    try {
+      await addDoc(collection(db, "bookings"), booking);
+      document.getElementById('confirmation').innerText = "Booking successful!";
+      bookingForm.reset();
+    } catch (err) {
+      console.error("Booking error:", err);
+      alert("Failed to submit booking.");
+    }
+  });
 }
 
-// Example Admin Logout
-function adminLogout() {
-  signOut(auth).then(() => console.log("Logged out"));
+// ======= ADMIN LOGIN =======
+const adminLoginForm = document.getElementById('adminLoginForm');
+if (adminLoginForm) {
+  adminLoginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('adminEmail').value;
+    const password = document.getElementById('adminPassword').value;
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      document.getElementById('adminLoginForm').style.display = "none";
+      document.getElementById('logoutBtn').style.display = "block";
+      document.getElementById('adminPanel').style.display = "block";
+      loadBookings();
+    } catch (err) {
+      console.error("Admin login error:", err);
+      alert("Login failed: " + err.message);
+    }
+  });
 }
 
-// Load bookings into the table
+// Logout
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', async () => {
+    await signOut(auth);
+    document.getElementById('adminLoginForm').style.display = "block";
+    document.getElementById('logoutBtn').style.display = "none";
+    document.getElementById('adminPanel').style.display = "none";
+  });
+}
+
+// ======= LOAD BOOKINGS TABLE =======
 async function loadBookings() {
   const tableBody = document.querySelector("#bookingsTable tbody");
+  if (!tableBody) return;
   tableBody.innerHTML = "";
 
   try {
-    const querySnapshot = await getDocs(collection(db, "bookings"));
-    querySnapshot.forEach((docSnap) => {
+    const snapshot = await getDocs(collection(db, "bookings"));
+    snapshot.forEach(docSnap => {
       const booking = docSnap.data();
       const row = document.createElement("tr");
 
@@ -86,11 +108,28 @@ async function loadBookings() {
       tableBody.appendChild(row);
     });
   } catch (err) {
-    console.error("Error loading bookings:", err);
+    console.error("Load bookings error:", err);
   }
 }
 
-// Open modal with booking details
+// ======= DELETE BOOKING =======
+async function deleteBooking(id) {
+  if (!confirm("Are you sure you want to delete this booking?")) return;
+
+  try {
+    await deleteDoc(doc(db, "bookings", id));
+    alert("Booking deleted successfully!");
+    loadBookings();
+  } catch (err) {
+    console.error("Delete error:", err);
+    alert("Failed to delete booking.");
+  }
+}
+
+// Expose deleteBooking globally for HTML onclick
+window.deleteBooking = deleteBooking;
+
+// ======= EDIT BOOKING MODAL =======
 function openModal(id, name, email, pickup, dropoff) {
   document.getElementById("editId").value = id;
   document.getElementById("editName").value = name;
@@ -102,16 +141,13 @@ function openModal(id, name, email, pickup, dropoff) {
   document.getElementById("overlay").style.display = "block";
 }
 
-// Close modal
 function closeModal() {
   document.getElementById("editModal").style.display = "none";
   document.getElementById("overlay").style.display = "none";
 }
 
-// Handle form submit (update booking)
 document.getElementById("editForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-
   const id = document.getElementById("editId").value;
   const name = document.getElementById("editName").value;
   const email = document.getElementById("editEmail").value;
@@ -126,36 +162,20 @@ document.getElementById("editForm").addEventListener("submit", async (e) => {
       dropoff,
       updatedAt: new Date()
     });
-
     alert("Booking updated successfully!");
     closeModal();
-    loadBookings(); // refresh table
+    loadBookings();
   } catch (err) {
-    console.error("Error updating booking:", err);
+    console.error("Update error:", err);
     alert("Failed to update booking.");
   }
 });
 
-// Delete booking
-async function deleteBooking(id) {
-  if (!confirm("Are you sure you want to delete this booking?")) return;
-
-  try {
-    await deleteDoc(doc(db, "bookings", id));
-    alert("Booking deleted successfully!");
-    loadBookings();
-  } catch (err) {
-    console.error("Error deleting booking:", err);
-    alert("Failed to delete booking.");
-  }
-}
-
-// Expose global functions (needed for onclick in HTML)
+// Expose modal functions globally
 window.openModal = openModal;
 window.closeModal = closeModal;
-window.deleteBooking = deleteBooking;
 
-// Load bookings on page load
-window.onload = loadBookings;
-
-
+// ======= INITIAL LOAD =======
+window.onload = () => {
+  loadBookings();
+};
