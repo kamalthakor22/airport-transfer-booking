@@ -1,64 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Ajax to Pearson Airport Transfer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Airport Transfer Booking</title>
   <style>
-    body { font-family: Arial; padding: 20px; max-width: 600px; margin: auto; }
-    input, select, textarea { width: 100%; margin-top: 10px; padding: 10px; }
-    button { background-color: #2e86de; color: white; padding: 10px; border: none; cursor: pointer; margin-top: 10px; }
-    #adminPanel { display: none; margin-top: 30px; }
-    #bookingsList { margin-top: 20px; }
-    .booking { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    label { display: block; margin-top: 10px; }
+    input, select, textarea { width: 100%; padding: 5px; margin-top: 5px; }
+    button { margin-top: 15px; padding: 10px 15px; }
+    #confirmation { margin-top: 10px; color: green; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Book Your Airport Transfer</h1>
+  <h1>Airport Transfer Booking</h1>
   <form id="bookingForm">
-    <input type="text" placeholder="Full Name" id="name" required />
-    <input type="email" placeholder="Email Address" id="email" required />
-    <input type="tel" placeholder="Phone Number" id="phone" required />
-    <input type="text" placeholder="Pickup Address" id="pickup" required />
-    <input type="text" placeholder="Drop-off Address (if different)" id="dropoff" />
-    <input type="datetime-local" id="datetime" required />
-    <select id="tripType">
-      <option value="One Way">One Way</option>
-      <option value="Round Trip">Round Trip</option>
+    <label>Name:</label>
+    <input type="text" id="name" required>
+
+    <label>Email:</label>
+    <input type="email" id="email" required>
+
+    <label>Phone:</label>
+    <input type="text" id="phone" required>
+
+    <label>Pickup Location:</label>
+    <input type="text" id="pickup" required>
+
+    <label>Dropoff Location:</label>
+    <input type="text" id="dropoff" required>
+
+    <label>Pickup Date & Time:</label>
+    <input type="datetime-local" id="datetime" required>
+
+    <label>Trip Type:</label>
+    <select id="tripType" required>
+      <option value="one-way">One-way</option>
+      <option value="round-trip">Round-trip</option>
     </select>
-    <input type="text" id="referral" placeholder="Referral Code (optional)" />
-    <textarea id="notes" placeholder="Any special requests..."></textarea>
-    <div id="paypal-button-container"></div>
+
+    <label>Referral Code (optional):</label>
+    <input type="text" id="referral">
+
+    <label>Additional Notes:</label>
+    <textarea id="notes"></textarea>
+
     <button type="submit">Book Now</button>
   </form>
-  <p id="confirmation" style="color: green;"></p>
 
-  <hr>
-  <h2>Admin Login</h2>
-  <form id="adminLoginForm">
-    <input type="email" id="adminEmail" placeholder="Admin Email" required>
-    <input type="password" id="adminPassword" placeholder="Password" required>
-    <button type="submit">Login</button>
-  </form>
-  <button id="logoutBtn" style="display:none;">Logout</button>
+  <div id="confirmation"></div>
 
-  <div id="adminPanel">
-    <h2>Bookings Dashboard</h2>
-    <div id="bookingsList"></div>
-  </div>
-
-  <!-- Firebase -->
-  <!-- Firebase v8 (Namespaced SDK, works with firebase.* syntax) -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
-
-  <!-- Your config and app -->
-  <script src="firebase-config.js"></script>
-<!-- Use ES Modules for Firebase v9+ -->
-<script type="module" src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
-
-
-
