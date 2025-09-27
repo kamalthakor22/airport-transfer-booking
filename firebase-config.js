@@ -6,3 +6,6 @@ const firebaseConfig = {
   messagingSenderId: "664561343575",
   appId: "1:664561343575:web:3132b18dfa6ba41118d712"
 };
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
