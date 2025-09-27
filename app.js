@@ -1,5 +1,3 @@
-emailjs.init("YOUR_EMAILJS_USER_ID");
-
 const auth = firebase.auth();
 
 // Handle booking form (same as before)
@@ -91,3 +89,4 @@ paypal.Buttons({
     alert("Payment completed by " + details.payer.name.given_name);
   })
 }).render('#paypal-button-container');
+
