@@ -6,12 +6,12 @@ import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc } 
 import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef"
+  apiKey: "AIzaSyBA4r1N4L_GwTrVrKku3lFYuj1gZIy-45w",
+  authDomain: "ajaxairporttransfer.firebaseapp.com",
+  projectId: "ajaxairporttransfer",
+  storageBucket: "ajaxairporttransfer.firebasestorage.app",
+  messagingSenderId: "664561343575",
+  appId: "1:664561343575:web:3132b18dfa6ba41118d712"
 };
 
 const app = initializeApp(firebaseConfig);
