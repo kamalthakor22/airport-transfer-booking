@@ -1,3 +1,5 @@
+emailjs.init("YOUR_EMAILJS_USER_ID");
+
 const auth = firebase.auth();
 
 // Handle booking form (same as before)
@@ -80,13 +82,5 @@ async function deleteBooking(id) {
   }
 }
 
-// PayPal button (same as before)
-paypal.Buttons({
-  createOrder: (data, actions) => actions.order.create({
-    purchase_units: [{ amount: { value: "60.00" } }]
-  }),
-  onApprove: (data, actions) => actions.order.capture().then(details => {
-    alert("Payment completed by " + details.payer.name.given_name);
-  })
-}).render('#paypal-button-container');
+
 
