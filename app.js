@@ -61,10 +61,10 @@ function adminLogout() {
   signOut(auth).then(() => console.log("Logged out"));
 }
 
-// Fetch and render bookings
+// Load bookings into the table
 async function loadBookings() {
   const tableBody = document.querySelector("#bookingsTable tbody");
-  tableBody.innerHTML = ""; // Clear old data
+  tableBody.innerHTML = "";
 
   try {
     const querySnapshot = await getDocs(collection(db, "bookings"));
@@ -77,7 +77,10 @@ async function loadBookings() {
         <td>${booking.email}</td>
         <td>${booking.pickup}</td>
         <td>${booking.dropoff}</td>
-        <td><button onclick="deleteBooking('${docSnap.id}')">Delete</button></td>
+        <td>
+          <button onclick="openModal('${docSnap.id}', '${booking.name}', '${booking.email}', '${booking.pickup}', '${booking.dropoff}')">Edit</button>
+          <button onclick="deleteBooking('${docSnap.id}')">Delete</button>
+        </td>
       `;
 
       tableBody.appendChild(row);
@@ -87,6 +90,52 @@ async function loadBookings() {
   }
 }
 
+// Open modal with booking details
+function openModal(id, name, email, pickup, dropoff) {
+  document.getElementById("editId").value = id;
+  document.getElementById("editName").value = name;
+  document.getElementById("editEmail").value = email;
+  document.getElementById("editPickup").value = pickup;
+  document.getElementById("editDropoff").value = dropoff;
+
+  document.getElementById("editModal").style.display = "block";
+  document.getElementById("overlay").style.display = "block";
+}
+
+// Close modal
+function closeModal() {
+  document.getElementById("editModal").style.display = "none";
+  document.getElementById("overlay").style.display = "none";
+}
+
+// Handle form submit (update booking)
+document.getElementById("editForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const id = document.getElementById("editId").value;
+  const name = document.getElementById("editName").value;
+  const email = document.getElementById("editEmail").value;
+  const pickup = document.getElementById("editPickup").value;
+  const dropoff = document.getElementById("editDropoff").value;
+
+  try {
+    await updateDoc(doc(db, "bookings", id), {
+      name,
+      email,
+      pickup,
+      dropoff,
+      updatedAt: new Date()
+    });
+
+    alert("Booking updated successfully!");
+    closeModal();
+    loadBookings(); // refresh table
+  } catch (err) {
+    console.error("Error updating booking:", err);
+    alert("Failed to update booking.");
+  }
+});
+
 // Delete booking
 async function deleteBooking(id) {
   if (!confirm("Are you sure you want to delete this booking?")) return;
@@ -94,16 +143,19 @@ async function deleteBooking(id) {
   try {
     await deleteDoc(doc(db, "bookings", id));
     alert("Booking deleted successfully!");
-    loadBookings(); // Reload table
+    loadBookings();
   } catch (err) {
     console.error("Error deleting booking:", err);
     alert("Failed to delete booking.");
   }
 }
 
-// Expose deleteBooking globally (needed for onclick in HTML)
+// Expose global functions (needed for onclick in HTML)
+window.openModal = openModal;
+window.closeModal = closeModal;
 window.deleteBooking = deleteBooking;
 
-// Load bookings when page loads
+// Load bookings on page load
 window.onload = loadBookings;
+
 
