@@ -1,200 +1,266 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Pearson Airport Drop Booking</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kamal Thakor – Booking Page</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 0; padding: 0;
-      background: #f8f9fa;
-      color: #333;
+      font-family: "Inter", sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 0;
     }
     .container {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 20px;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 2rem;
       background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
-    h1, h2 {
+    header {
       text-align: center;
+      margin-bottom: 2rem;
     }
-    .calendar, .timeslots, .details {
-      margin-top: 20px;
+    header h1 {
+      font-size: 1.8rem;
+      margin-bottom: .5rem;
     }
-    .timeslot {
-      display: inline-block;
-      margin: 5px;
-      padding: 10px 20px;
-      border: 1px solid #007bff;
-      border-radius: 6px;
-      cursor: pointer;
-      background: #fff;
+    header p {
+      color: #6b7280;
     }
-    .timeslot.selected {
-      background: #007bff;
-      color: #fff;
+
+    .hidden { display: none; }
+
+    .form-group {
+      margin-bottom: 1.5rem;
     }
-    .hidden {
-      display: none;
+    label {
+      display: block;
+      margin-bottom: .5rem;
+      font-weight: 500;
     }
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-    button:disabled {
-      background: #aaa;
-    }
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-    input, select, textarea {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+    input {
       width: 100%;
+      padding: .75rem 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    input:focus {
+      border-color: #2563eb;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    }
+
+    /* Timeslot grid styling */
+    .timeslots-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .timeslots {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: .75rem;
+      margin-top: 1rem;
+    }
+    .slot {
+      padding: .75rem;
+      text-align: center;
+      border: 1px solid #d1d5db;
+      border-radius: 9999px; /* pill shape */
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #f9fafb;
+      white-space: nowrap;
+    }
+    .slot:hover {
+      border-color: #2563eb;
+      background: #eef2ff;
+    }
+    .slot.selected {
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+    }
+
+    button {
+      background-color: #2563eb;
+      color: #fff;
+      padding: .9rem 1.25rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background-color: #1e40af;
+    }
+
+    .status {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 640px) {
+      .timeslots {
+        grid-auto-flow: column;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        overflow-x: auto;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Pearson Airport Drop Booking</h1>
-    
-    <!-- Step 1: Select Date -->
-    <div class="calendar">
-      <h2>Select a Date</h2>
-      <input type="date" id="datePicker" min="">
+    <header>
+      <h1>Book a Ride – Pearson Airport</h1>
+      <p>Select a date and time that works for you.</p>
+    </header>
+
+    <!-- Step 1: Date Selection -->
+    <div id="step1">
+      <div class="form-group">
+        <label for="date">Select Date</label>
+        <input type="date" id="date" required />
+      </div>
+      <div id="timeslotSection" class="hidden">
+        <p><strong>Select a Time</strong></p>
+        <div class="timeslots-wrapper">
+          <div class="timeslots" id="timeslots"></div>
+        </div>
+        <button id="nextBtn" class="hidden">Next</button>
+      </div>
     </div>
-    
-    <!-- Step 2: Select Timeslot -->
-    <div class="timeslots hidden">
-      <h2>Select a Time</h2>
-      <div id="timeslotContainer"></div>
-      <button id="nextBtn" class="hidden">Next</button>
-    </div>
-    
-    <!-- Step 3: Enter Details -->
-    <div class="details hidden">
-      <h2>Enter Details</h2>
-      <form id="bookingForm">
-        <input type="text" name="name" placeholder="Full Name *" required>
-        <input type="tel" name="phone" placeholder="Phone Number *" required>
-        <input type="email" name="email" placeholder="Email *" required>
-        <input type="text" name="pickup" placeholder="Pickup Location *" required>
-        <textarea name="address" placeholder="Complete Address *" required></textarea>
-        <input type="text" name="flight" placeholder="Flight Name & Number *" required>
-        <input type="number" name="passengers" placeholder="Number of Passengers *" min="1" required>
-        <select name="checkin" required>
-          <option value="">Number of Check-in Baggage (Large)</option>
-          <option>0</option><option>1</option><option>2</option><option>3</option>
-        </select>
-        <select name="carryon" required>
-          <option value="">Number of Carry-on Baggage (Small)</option>
-          <option>0</option><option>1</option><option>2</option><option>3</option>
-        </select>
-        <button type="submit">Book Now</button>
-      </form>
-    </div>
+
+    <!-- Step 2: Details Form -->
+    <form id="bookingForm" class="hidden">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" name="name" required />
+      </div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required />
+      </div>
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" name="phone" required />
+      </div>
+      <div class="form-group">
+        <label for="pickup">Pickup Location (Complete Address)</label>
+        <input type="text" id="pickup" name="pickup" required />
+      </div>
+      <div class="form-group">
+        <label for="flight">Flight Name & Number</label>
+        <input type="text" id="flight" name="flight" required />
+      </div>
+      <div class="form-group">
+        <label for="passengers"># of Passengers</label>
+        <input type="number" id="passengers" name="passengers" required />
+      </div>
+      <div class="form-group">
+        <label for="checkin"># of Check-in Baggages (Large)</label>
+        <input type="number" id="checkin" name="checkin" required />
+      </div>
+      <div class="form-group">
+        <label for="carryon"># of Carry-on Baggages (Small)</label>
+        <input type="number" id="carryon" name="carryon" required />
+      </div>
+      <button type="submit">Confirm Booking</button>
+    </form>
+
+    <p id="statusMessage" class="status"></p>
   </div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDK -->
   <script type="module">
-    // Import Firebase modules (v9+ modular syntax)
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-    // 🔹 Replace with your Firebase config
+    // Firebase Config (replace with yours)
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyBA4r1N4L_GwTrVrKku3lFYuj1gZIy-45w",
+      authDomain: "ajaxairporttransfer.firebaseapp.com",
+      projectId: "ajaxairporttransfer",
+      storageBucket: "ajaxairporttransfer.firebasestorage.app",
+      messagingSenderId: "664561343575",
+      appId: "1:664561343575:web:3132b18dfa6ba41118d712"
     };
-
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // UI logic
-    const today = new Date().toISOString().split("T")[0];
-    document.getElementById("datePicker").setAttribute("min", today);
-
-    const datePicker = document.getElementById("datePicker");
-    const timeslotsDiv = document.querySelector(".timeslots");
-    const timeslotContainer = document.getElementById("timeslotContainer");
+    const dateInput = document.getElementById("date");
+    const timeslotSection = document.getElementById("timeslotSection");
+    const timeslotsDiv = document.getElementById("timeslots");
     const nextBtn = document.getElementById("nextBtn");
-    const detailsDiv = document.querySelector(".details");
+    const bookingForm = document.getElementById("bookingForm");
+    const statusMessage = document.getElementById("statusMessage");
 
+    let selectedSlot = null;
     let selectedDate = null;
-    let selectedTime = null;
 
-    datePicker.addEventListener("change", () => {
-      timeslotContainer.innerHTML = "";
-      selectedTime = null;
-      nextBtn.classList.add("hidden");
-      timeslotsDiv.classList.remove("hidden");
-      selectedDate = datePicker.value;
-
-      // Generate 1-hour timeslots (12 PM - 11 PM example)
-      for (let hour = 12; hour <= 23; hour++) {
-        const ampm = hour >= 12 ? "pm" : "am";
-        const displayHour = hour > 12 ? hour - 12 : hour;
-        const timeslot = document.createElement("div");
-        timeslot.classList.add("timeslot");
-        timeslot.textContent = `${displayHour}:00${ampm}`;
-        timeslot.onclick = () => {
-          document.querySelectorAll(".timeslot").forEach(t => t.classList.remove("selected"));
-          timeslot.classList.add("selected");
-          selectedTime = timeslot.textContent;
+    // Generate 1-hour slots from 12am – 9pm
+    function generateSlots() {
+      timeslotsDiv.innerHTML = "";
+      for (let h = 0; h <= 21; h++) {
+        const hour = (h % 12) || 12;
+        const ampm = h < 12 ? "AM" : "PM";
+        const label = `${hour}:00 ${ampm}`;
+        const slot = document.createElement("div");
+        slot.className = "slot";
+        slot.textContent = label;
+        slot.dataset.value = `${h}:00`;
+        slot.addEventListener("click", () => {
+          document.querySelectorAll(".slot").forEach(s => s.classList.remove("selected"));
+          slot.classList.add("selected");
+          selectedSlot = slot.dataset.value;
           nextBtn.classList.remove("hidden");
-        };
-        timeslotContainer.appendChild(timeslot);
+        });
+        timeslotsDiv.appendChild(slot);
       }
+    }
+
+    dateInput.addEventListener("change", () => {
+      selectedDate = dateInput.value;
+      timeslotSection.classList.remove("hidden");
+      generateSlots();
     });
 
     nextBtn.addEventListener("click", () => {
-      timeslotsDiv.classList.add("hidden");
-      detailsDiv.classList.remove("hidden");
+      document.getElementById("step1").classList.add("hidden");
+      bookingForm.classList.remove("hidden");
     });
 
-    document.getElementById("bookingForm").addEventListener("submit", async (e) => {
+    bookingForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const formData = new FormData(e.target);
-      const booking = {
-        date: selectedDate,
-        time: selectedTime,
-        name: formData.get("name"),
-        phone: formData.get("phone"),
-        email: formData.get("email"),
-        pickup: formData.get("pickup"),
-        address: formData.get("address"),
-        flight: formData.get("flight"),
-        passengers: formData.get("passengers"),
-        checkin: formData.get("checkin"),
-        carryon: formData.get("carryon"),
-        createdAt: new Date().toISOString()
-      };
-
       try {
-        await addDoc(collection(db, "bookings"), booking);
-        alert("✅ Booking submitted successfully!");
-        e.target.reset();
-        detailsDiv.classList.add("hidden");
-      } catch (error) {
-        console.error("Error adding booking: ", error);
-        alert("❌ Failed to submit booking.");
+        await addDoc(collection(db, "bookings"), {
+          name: bookingForm.name.value,
+          email: bookingForm.email.value,
+          phone: bookingForm.phone.value,
+          pickup: bookingForm.pickup.value,
+          flight: bookingForm.flight.value,
+          passengers: bookingForm.passengers.value,
+          checkin: bookingForm.checkin.value,
+          carryon: bookingForm.carryon.value,
+          date: selectedDate,
+          time: selectedSlot,
+          createdAt: new Date()
+        });
+        statusMessage.textContent = "✅ Booking confirmed!";
+        statusMessage.style.color = "green";
+        bookingForm.reset();
+      } catch (err) {
+        console.error("Error saving booking", err);
+        statusMessage.textContent = "❌ Failed to save booking.";
+        statusMessage.style.color = "red";
       }
     });
   </script>
