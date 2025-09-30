@@ -2,54 +2,201 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Pearson Airport Drop Booking</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Airport Transfer Booking</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    label { display: block; margin-top: 10px; }
-    input, select, textarea { width: 100%; padding: 5px; margin-top: 5px; }
-    button { margin-top: 15px; padding: 10px 15px; }
-    #confirmation { margin-top: 10px; color: green; font-weight: bold; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 0;
+      background: #f8f9fa;
+      color: #333;
+    }
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .calendar, .timeslots, .details {
+      margin-top: 20px;
+    }
+    .timeslot {
+      display: inline-block;
+      margin: 5px;
+      padding: 10px 20px;
+      border: 1px solid #007bff;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #fff;
+    }
+    .timeslot.selected {
+      background: #007bff;
+      color: #fff;
+    }
+    .hidden {
+      display: none;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:disabled {
+      background: #aaa;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    input, select, textarea {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
-  <h1>Airport Transfer Booking</h1>
-  <form id="bookingForm">
-    <label>Name:</label>
-    <input type="text" id="name" required>
+  <div class="container">
+    <h1>Pearson Airport Drop Booking</h1>
+    
+    <!-- Step 1: Select Date -->
+    <div class="calendar">
+      <h2>Select a Date</h2>
+      <input type="date" id="datePicker" min="">
+    </div>
+    
+    <!-- Step 2: Select Timeslot -->
+    <div class="timeslots hidden">
+      <h2>Select a Time</h2>
+      <div id="timeslotContainer"></div>
+      <button id="nextBtn" class="hidden">Next</button>
+    </div>
+    
+    <!-- Step 3: Enter Details -->
+    <div class="details hidden">
+      <h2>Enter Details</h2>
+      <form id="bookingForm">
+        <input type="text" name="name" placeholder="Full Name *" required>
+        <input type="tel" name="phone" placeholder="Phone Number *" required>
+        <input type="email" name="email" placeholder="Email *" required>
+        <input type="text" name="pickup" placeholder="Pickup Location *" required>
+        <textarea name="address" placeholder="Complete Address *" required></textarea>
+        <input type="text" name="flight" placeholder="Flight Name & Number *" required>
+        <input type="number" name="passengers" placeholder="Number of Passengers *" min="1" required>
+        <select name="checkin" required>
+          <option value="">Number of Check-in Baggage (Large)</option>
+          <option>0</option><option>1</option><option>2</option><option>3</option>
+        </select>
+        <select name="carryon" required>
+          <option value="">Number of Carry-on Baggage (Small)</option>
+          <option>0</option><option>1</option><option>2</option><option>3</option>
+        </select>
+        <button type="submit">Book Now</button>
+      </form>
+    </div>
+  </div>
 
-    <label>Email:</label>
-    <input type="email" id="email" required>
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // Import Firebase modules (v9+ modular syntax)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-    <label>Phone:</label>
-    <input type="text" id="phone" required>
+    // 🔹 Replace with your Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
-    <label>Pickup Location:</label>
-    <input type="text" id="pickup" required>
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-    <label>Dropoff Location:</label>
-    <input type="text" id="dropoff" required>
+    // UI logic
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("datePicker").setAttribute("min", today);
 
-    <label>Pickup Date & Time:</label>
-    <input type="datetime-local" id="datetime" required>
+    const datePicker = document.getElementById("datePicker");
+    const timeslotsDiv = document.querySelector(".timeslots");
+    const timeslotContainer = document.getElementById("timeslotContainer");
+    const nextBtn = document.getElementById("nextBtn");
+    const detailsDiv = document.querySelector(".details");
 
-    <label>Trip Type:</label>
-    <select id="tripType" required>
-      <option value="one-way">One-way</option>
-      <option value="round-trip">Round-trip</option>
-    </select>
+    let selectedDate = null;
+    let selectedTime = null;
 
-    <label>Referral Code (optional):</label>
-    <input type="text" id="referral">
+    datePicker.addEventListener("change", () => {
+      timeslotContainer.innerHTML = "";
+      selectedTime = null;
+      nextBtn.classList.add("hidden");
+      timeslotsDiv.classList.remove("hidden");
+      selectedDate = datePicker.value;
 
-    <label>Additional Notes:</label>
-    <textarea id="notes"></textarea>
+      // Generate 1-hour timeslots (12 PM - 11 PM example)
+      for (let hour = 12; hour <= 23; hour++) {
+        const ampm = hour >= 12 ? "pm" : "am";
+        const displayHour = hour > 12 ? hour - 12 : hour;
+        const timeslot = document.createElement("div");
+        timeslot.classList.add("timeslot");
+        timeslot.textContent = `${displayHour}:00${ampm}`;
+        timeslot.onclick = () => {
+          document.querySelectorAll(".timeslot").forEach(t => t.classList.remove("selected"));
+          timeslot.classList.add("selected");
+          selectedTime = timeslot.textContent;
+          nextBtn.classList.remove("hidden");
+        };
+        timeslotContainer.appendChild(timeslot);
+      }
+    });
 
-    <button type="submit">Book Now</button>
-  </form>
+    nextBtn.addEventListener("click", () => {
+      timeslotsDiv.classList.add("hidden");
+      detailsDiv.classList.remove("hidden");
+    });
 
-  <div id="confirmation"></div>
+    document.getElementById("bookingForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const booking = {
+        date: selectedDate,
+        time: selectedTime,
+        name: formData.get("name"),
+        phone: formData.get("phone"),
+        email: formData.get("email"),
+        pickup: formData.get("pickup"),
+        address: formData.get("address"),
+        flight: formData.get("flight"),
+        passengers: formData.get("passengers"),
+        checkin: formData.get("checkin"),
+        carryon: formData.get("carryon"),
+        createdAt: new Date().toISOString()
+      };
 
-  <script type="module" src="app.js"></script>
+      try {
+        await addDoc(collection(db, "bookings"), booking);
+        alert("✅ Booking submitted successfully!");
+        e.target.reset();
+        detailsDiv.classList.add("hidden");
+      } catch (error) {
+        console.error("Error adding booking: ", error);
+        alert("❌ Failed to submit booking.");
+      }
+    });
+  </script>
 </body>
 </html>
