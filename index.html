@@ -7,16 +7,17 @@
 <style>
 body {
   font-family: Arial, sans-serif;
-  background: #ccc; /* grayish outside container */
+  background: #ccc;
   margin: 0;
   padding: 20px;
   display: flex;
   justify-content: center;
 }
+
 .container {
   display: flex;
   border: 2px solid #999;
-  background: #fff; /* white inside container */
+  background: #fff;
   max-width: 1200px;
   width: 100%;
   height: 90vh;
@@ -24,23 +25,26 @@ body {
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
+
 .left, .right {
   padding: 30px;
   height: 100%;
 }
+
 .left {
   flex: 0 0 400px;
   border-right: 1px solid #eee;
   position: sticky;
   top: 0;
 }
+
 .right {
   flex: 1;
   overflow-y: auto;
   background: #fff;
 }
+
 h1 { font-size: 1.8rem; margin-bottom: 10px; }
-h2 { font-size: 1.2rem; color: #555; margin-bottom: 20px; }
 .section { margin-bottom: 25px; }
 .timeslot-grid {
   display: grid;
@@ -74,12 +78,9 @@ button {
 button:hover { background: #0056b3; }
 .highlight { font-weight: bold; color: #007bff; }
 
-/* Calendar styles */
-.date-header { font-weight: bold; margin-bottom: 10px; }
 #calendar-nav {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   margin-bottom: 10px;
 }
 #calendar {
@@ -114,6 +115,7 @@ button:hover { background: #0056b3; }
 </head>
 <body>
 <div class="container">
+
   <!-- LEFT SIDE -->
   <div class="left">
     <p><strong>📆 Selected Date:</strong> <span id="chosenDate" class="highlight">Not selected</span></p>
@@ -181,12 +183,18 @@ button:hover { background: #0056b3; }
     </div>
 
     <button id="bookBtn" style="display:none;">Book</button>
+    <div id="authSection">
+      <button id="signInBtn">Sign in with Google to Book</button>
+      <span id="userEmail"></span>
+    </div>
   </div>
+
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBA4r1N4L_GwTrVrKku3lFYuj1gZIy-45w",
@@ -200,134 +208,182 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const bookingsRef = collection(db, "bookings");
+const auth = getAuth();
+
+let selectedDate = null;
+let selectedTime = null;
 
 const timeslotGrid = document.getElementById("timeslotGrid");
 const detailsForm = document.getElementById("details");
 const bookBtn = document.getElementById("bookBtn");
 const chosenDateEl = document.getElementById("chosenDate");
 const chosenTimeEl = document.getElementById("chosenTime");
+const signInBtn = document.getElementById("signInBtn");
+const userEmailEl = document.getElementById("userEmail");
 
-let selectedDate = null;
-let selectedTime = null;
+// Calendar
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 let bookedDates = [];
+let availableDates = [];
 
 const monthYearEl = document.getElementById("monthYear");
 const calendarEl = document.getElementById("calendar");
 const prevBtn = document.getElementById("prevMonth");
 const nextBtn = document.getElementById("nextMonth");
 
+// Auth
+signInBtn.onclick = () => {
+  const provider = new GoogleAuthProvider();
+  signInWithPopup(auth, provider);
+};
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    signInBtn.style.display = "none";
+    userEmailEl.innerText = `Signed in as ${user.email}`;
+    bookBtn.disabled = false;
+  } else {
+    signInBtn.style.display = "block";
+    userEmailEl.innerText = "";
+    bookBtn.disabled = true;
+  }
+});
+
+// Fetch bookings to mark unavailable dates
 const fetchBookings = async () => {
   const snapshot = await getDocs(bookingsRef);
   const dateCount = {};
   snapshot.docs.forEach(doc => {
     const data = doc.data();
-    dateCount[data.date] = dateCount[data.date] ? dateCount[data.date]+1 : 1;
+    dateCount[data.date] = dateCount[data.date] ? dateCount[data.date] + 1 : 1;
   });
   bookedDates = [];
+  availableDates = [];
   Object.keys(dateCount).forEach(date => {
-    if(dateCount[date]>=22) bookedDates.push(date);
+    if (dateCount[date] >= 22) bookedDates.push(date);
+    else availableDates.push(date);
   });
 };
 
+// Generate calendar
 const generateCalendar = async () => {
   await fetchBookings();
   calendarEl.innerHTML = "";
 
-  const firstDay = new Date(currentYear, currentMonth,1).getDay();
-  const daysInMonth = new Date(currentYear, currentMonth+1,0).getDate();
-  monthYearEl.innerText = new Date(currentYear, currentMonth).toLocaleString('default', { month:'long', year:'numeric' });
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-  for(let i=0;i<firstDay;i++){calendarEl.appendChild(document.createElement("div"));}
-  for(let day=1; day<=daysInMonth; day++){
+  monthYearEl.innerText = new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  // Blank days
+  for (let i = 0; i < firstDay; i++) calendarEl.appendChild(document.createElement("div"));
+
+  for (let day = 1; day <= daysInMonth; day++) {
     const dayDiv = document.createElement("div");
     dayDiv.classList.add("calendar-day");
     const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     dayDiv.innerText = day;
-    if(bookedDates.includes(dateStr)){ dayDiv.classList.add("disabled"); }
-    else{
+
+    if (bookedDates.includes(dateStr)) {
+      dayDiv.classList.add("disabled");
+    } else {
       const dot = document.createElement("div");
       dot.classList.add("dot");
       dayDiv.appendChild(dot);
     }
-    dayDiv.onclick = () => { if(!dayDiv.classList.contains("disabled")) selectCalendarDay(dayDiv, dateStr); };
+
+    dayDiv.onclick = () => selectCalendarDay(dayDiv, dateStr);
     calendarEl.appendChild(dayDiv);
   }
 };
 
+// Calendar selection
 const selectCalendarDay = (dayDiv, dateStr) => {
-  document.querySelectorAll(".calendar-day").forEach(d=>d.classList.remove("selected"));
+  document.querySelectorAll(".calendar-day").forEach(d => d.classList.remove("selected"));
   dayDiv.classList.add("selected");
   selectedDate = dateStr;
   chosenDateEl.innerText = dateStr;
   generateSlots();
   disableBookedSlots(selectedDate);
-  detailsForm.style.display="none";
-  bookBtn.style.display="none";
-  selectedTime=null;
-  chosenTimeEl.innerText="Not selected";
+  detailsForm.style.display = "none";
+  bookBtn.style.display = "none";
+  selectedTime = null;
+  chosenTimeEl.innerText = "Not selected";
 };
 
+// Month navigation
 prevBtn.onclick = () => { currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} generateCalendar(); };
 nextBtn.onclick = () => { currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;} generateCalendar(); };
 
+// Timeslots
 const generateSlots = () => {
-  timeslotGrid.innerHTML="";
-  for(let h=0; h<=21; h++){
-    let hour = h%12===0?12:h%12;
-    let ampm = h<12?"AM":"PM";
-    const slot = `${hour}:00 ${ampm}`;
+  timeslotGrid.innerHTML = "";
+  const slots = [];
+  for (let h = 0; h <= 21; h++) {
+    let hour = h % 12 === 0 ? 12 : h % 12;
+    let ampm = h < 12 ? "AM" : "PM";
+    slots.push(`${hour}:00 ${ampm}`);
+  }
+  slots.forEach(slot => {
     const div = document.createElement("div");
     div.classList.add("timeslot");
     div.innerText = slot;
-    div.onclick = ()=>selectSlot(div, slot);
+    div.onclick = () => selectSlot(div, slot);
     timeslotGrid.appendChild(div);
-  }
+  });
 };
 
 const selectSlot = (div, slot) => {
-  document.querySelectorAll(".timeslot").forEach(t=>t.classList.remove("selected"));
+  document.querySelectorAll(".timeslot").forEach(t => t.classList.remove("selected"));
   div.classList.add("selected");
   selectedTime = slot;
-  detailsForm.style.display="block";
-  bookBtn.style.display="block";
-  chosenTimeEl.innerText=slot;
+  detailsForm.style.display = "block";
+  bookBtn.style.display = "block";
+  chosenTimeEl.innerText = slot;
 };
 
-const disableBookedSlots = async (date)=>{
-  const q = query(bookingsRef, where("date","==",date));
+// Disable booked slots
+const disableBookedSlots = async (date) => {
+  const q = query(bookingsRef, where("date", "==", date));
   const snapshot = await getDocs(q);
-  const bookedTimes = snapshot.docs.map(doc=>doc.data().time);
-  document.querySelectorAll(".timeslot").forEach(div=>{
-    if(bookedTimes.includes(div.innerText)){
+  const bookedTimes = snapshot.docs.map(doc => doc.data().time);
+  document.querySelectorAll(".timeslot").forEach(div => {
+    if (bookedTimes.includes(div.innerText)) {
       div.classList.add("disabled");
       div.onclick = null;
     }
   });
 };
 
-bookBtn.addEventListener("click", async ()=>{
-  if(!selectedDate || !selectedTime){alert("Please select a date and time slot"); return;}
-  try{
-    await addDoc(bookingsRef,{
-      date:selectedDate,
-      time:selectedTime,
-      name:document.getElementById("name").value,
-      phone:document.getElementById("phone").value,
-      email:document.getElementById("email").value,
-      pickup:document.getElementById("pickup").value,
-      flight:document.getElementById("flight").value,
-      passengers:document.getElementById("passengers").value,
-      checkin:document.getElementById("checkin").value,
-      carryon:document.getElementById("carryon").value,
+// Book button
+bookBtn.addEventListener("click", async () => {
+  const user = auth.currentUser;
+  if (!user) { alert("Please sign in to book."); return; }
+  if (!selectedDate || !selectedTime) { alert("Select a date & time"); return; }
+  try {
+    await addDoc(bookingsRef, {
+      date: selectedDate,
+      time: selectedTime,
+      name: document.getElementById("name").value,
+      phone: document.getElementById("phone").value,
+      email: document.getElementById("email").value,
+      pickup: document.getElementById("pickup").value,
+      flight: document.getElementById("flight").value,
+      passengers: document.getElementById("passengers").value,
+      checkin: document.getElementById("checkin").value,
+      carryon: document.getElementById("carryon").value,
       createdAt: new Date().toISOString()
     });
     alert("✅ Booking confirmed!");
     location.reload();
-  }catch(err){console.error(err); alert("❌ Failed to save booking.");}
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to save booking.");
+  }
 });
 
+// Init
 generateCalendar();
 </script>
 </body>
