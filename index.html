@@ -2,189 +2,146 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Kamal Thakor – Booking Page</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Airport Transfer Booking</title>
+  <link rel="stylesheet" href="styles.css" />
   <style>
     body {
-      font-family: "Inter", sans-serif;
-      background: #f9fafb;
+      font-family: Arial, sans-serif;
+      background: #f9f9fb;
       margin: 0;
       padding: 0;
+      display: flex;
+      justify-content: center;
     }
     .container {
-      max-width: 800px;
-      margin: 50px auto;
-      padding: 2rem;
-      background: #fff;
+      max-width: 600px;
+      width: 100%;
+      padding: 20px;
+      background: white;
+      margin: 40px auto;
       border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    header {
+    h1 {
+      font-size: 1.6rem;
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 20px;
     }
-    header h1 {
-      font-size: 1.8rem;
-      margin-bottom: .5rem;
-    }
-    header p {
-      color: #6b7280;
-    }
-
-    .hidden { display: none; }
-
-    .form-group {
-      margin-bottom: 1.5rem;
+    .calendar, .timeslots, .details {
+      margin-bottom: 25px;
     }
     label {
+      font-weight: bold;
       display: block;
-      margin-bottom: .5rem;
-      font-weight: 500;
+      margin-bottom: 8px;
     }
-    input {
+    input, textarea {
       width: 100%;
-      padding: .75rem 1rem;
-      border: 1px solid #d1d5db;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
       border-radius: 8px;
-      font-size: 1rem;
     }
-    input:focus {
-      border-color: #2563eb;
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-    }
-
-    /* Timeslot grid styling */
-    .timeslots-wrapper {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    .timeslots {
+    .timeslot-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: .75rem;
-      margin-top: 1rem;
+      gap: 10px;
     }
-    .slot {
-      padding: .75rem;
+    .timeslot {
+      padding: 10px;
       text-align: center;
-      border: 1px solid #d1d5db;
-      border-radius: 9999px; /* pill shape */
+      border: 1px solid #ddd;
+      border-radius: 8px;
       cursor: pointer;
+      background: #fff;
       transition: all 0.2s;
-      background: #f9fafb;
-      white-space: nowrap;
     }
-    .slot:hover {
-      border-color: #2563eb;
-      background: #eef2ff;
+    .timeslot:hover {
+      background: #eef5ff;
+      border-color: #007bff;
     }
-    .slot.selected {
-      background: #2563eb;
-      color: #fff;
-      border-color: #2563eb;
+    .timeslot.selected {
+      background: #007bff;
+      color: white;
+      font-weight: bold;
     }
-
+    .timeslot.disabled {
+      background: #f1f1f1;
+      color: #aaa;
+      border-color: #ccc;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
     button {
-      background-color: #2563eb;
-      color: #fff;
-      padding: .9rem 1.25rem;
+      padding: 12px 20px;
       border: none;
+      background: #007bff;
+      color: white;
       border-radius: 8px;
       font-size: 1rem;
-      font-weight: 500;
       cursor: pointer;
-      margin-top: 1rem;
-      transition: background 0.2s;
+      transition: background 0.3s;
+      display: block;
+      margin: auto;
     }
     button:hover {
-      background-color: #1e40af;
-    }
-
-    .status {
-      text-align: center;
-      margin-top: 1rem;
-      font-size: 0.95rem;
-    }
-
-    /* Mobile responsiveness */
-    @media (max-width: 640px) {
-      .timeslots {
-        grid-auto-flow: column;
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        overflow-x: auto;
-      }
+      background: #0056b3;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>Book a Ride – Pearson Airport</h1>
-      <p>Select a date and time that works for you.</p>
-    </header>
-
-    <!-- Step 1: Date Selection -->
-    <div id="step1">
-      <div class="form-group">
-        <label for="date">Select Date</label>
-        <input type="date" id="date" required />
-      </div>
-      <div id="timeslotSection" class="hidden">
-        <p><strong>Select a Time</strong></p>
-        <div class="timeslots-wrapper">
-          <div class="timeslots" id="timeslots"></div>
-        </div>
-        <button id="nextBtn" class="hidden">Next</button>
-      </div>
+    <h1>Airport Transfer Booking</h1>
+    
+    <!-- Step 1: Date -->
+    <div class="calendar">
+      <label for="date">Select Date</label>
+      <input type="date" id="date" />
     </div>
 
-    <!-- Step 2: Details Form -->
-    <form id="bookingForm" class="hidden">
-      <div class="form-group">
-        <label for="name">Full Name</label>
-        <input type="text" id="name" name="name" required />
-      </div>
-      <div class="form-group">
-        <label for="email">Email Address</label>
-        <input type="email" id="email" name="email" required />
-      </div>
-      <div class="form-group">
-        <label for="phone">Phone Number</label>
-        <input type="tel" id="phone" name="phone" required />
-      </div>
-      <div class="form-group">
-        <label for="pickup">Pickup Location (Complete Address)</label>
-        <input type="text" id="pickup" name="pickup" required />
-      </div>
-      <div class="form-group">
-        <label for="flight">Flight Name & Number</label>
-        <input type="text" id="flight" name="flight" required />
-      </div>
-      <div class="form-group">
-        <label for="passengers"># of Passengers</label>
-        <input type="number" id="passengers" name="passengers" required />
-      </div>
-      <div class="form-group">
-        <label for="checkin"># of Check-in Baggages (Large)</label>
-        <input type="number" id="checkin" name="checkin" required />
-      </div>
-      <div class="form-group">
-        <label for="carryon"># of Carry-on Baggages (Small)</label>
-        <input type="number" id="carryon" name="carryon" required />
-      </div>
-      <button type="submit">Confirm Booking</button>
-    </form>
+    <!-- Step 2: Time Slots -->
+    <div class="timeslots" id="timeslots">
+      <label>Select Time</label>
+      <div class="timeslot-grid" id="timeslotGrid"></div>
+    </div>
 
-    <p id="statusMessage" class="status"></p>
+    <!-- Step 3: Enter Details -->
+    <div class="details" id="details" style="display: none;">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" required />
+
+      <label for="phone">Phone Number</label>
+      <input type="text" id="phone" required />
+
+      <label for="email">Email</label>
+      <input type="email" id="email" required />
+
+      <label for="pickup">Pickup Location (Complete Address)</label>
+      <textarea id="pickup" required></textarea>
+
+      <label for="flight">Flight Name & Number</label>
+      <input type="text" id="flight" required />
+
+      <label for="passengers"># of Passengers</label>
+      <input type="number" id="passengers" required />
+
+      <label for="checkin"># of Check-In Baggage (Large)</label>
+      <input type="number" id="checkin" required />
+
+      <label for="carryon"># of Carry-On Baggage (Small)</label>
+      <input type="number" id="carryon" required />
+    </div>
+
+    <button id="bookBtn" style="display:none;">Book</button>
   </div>
 
-  <!-- Firebase SDK -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, where, getDocs } 
+      from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-    // Firebase Config (replace with yours)
+    // 🔹 Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyBA4r1N4L_GwTrVrKku3lFYuj1gZIy-45w",
       authDomain: "ajaxairporttransfer.firebaseapp.com",
@@ -193,74 +150,92 @@
       messagingSenderId: "664561343575",
       appId: "1:664561343575:web:3132b18dfa6ba41118d712"
     };
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const bookingsRef = collection(db, "bookings");
 
     const dateInput = document.getElementById("date");
-    const timeslotSection = document.getElementById("timeslotSection");
-    const timeslotsDiv = document.getElementById("timeslots");
-    const nextBtn = document.getElementById("nextBtn");
-    const bookingForm = document.getElementById("bookingForm");
-    const statusMessage = document.getElementById("statusMessage");
+    const timeslotGrid = document.getElementById("timeslotGrid");
+    const detailsForm = document.getElementById("details");
+    const bookBtn = document.getElementById("bookBtn");
 
-    let selectedSlot = null;
     let selectedDate = null;
+    let selectedTime = null;
 
-    // Generate 1-hour slots from 12am – 9pm
-    function generateSlots() {
-      timeslotsDiv.innerHTML = "";
+    // 🔹 Generate 1-hour slots (12AM - 9PM)
+    const generateSlots = () => {
+      timeslotGrid.innerHTML = "";
+      const slots = [];
       for (let h = 0; h <= 21; h++) {
-        const hour = (h % 12) || 12;
-        const ampm = h < 12 ? "AM" : "PM";
-        const label = `${hour}:00 ${ampm}`;
-        const slot = document.createElement("div");
-        slot.className = "slot";
-        slot.textContent = label;
-        slot.dataset.value = `${h}:00`;
-        slot.addEventListener("click", () => {
-          document.querySelectorAll(".slot").forEach(s => s.classList.remove("selected"));
-          slot.classList.add("selected");
-          selectedSlot = slot.dataset.value;
-          nextBtn.classList.remove("hidden");
-        });
-        timeslotsDiv.appendChild(slot);
+        let hour = h % 12 === 0 ? 12 : h % 12;
+        let ampm = h < 12 ? "AM" : "PM";
+        slots.push(`${hour}:00 ${ampm}`);
       }
-    }
+      slots.forEach(slot => {
+        const div = document.createElement("div");
+        div.classList.add("timeslot");
+        div.innerText = slot;
+        div.onclick = () => selectSlot(div, slot);
+        timeslotGrid.appendChild(div);
+      });
+    };
 
-    dateInput.addEventListener("change", () => {
-      selectedDate = dateInput.value;
-      timeslotSection.classList.remove("hidden");
+    const selectSlot = (div, slot) => {
+      document.querySelectorAll(".timeslot").forEach(t => t.classList.remove("selected"));
+      div.classList.add("selected");
+      selectedTime = slot;
+      detailsForm.style.display = "block";
+      bookBtn.style.display = "block";
+    };
+
+    // 🔹 Disable booked slots for selected date
+    const disableBookedSlots = async (date) => {
+      const q = query(bookingsRef, where("date", "==", date));
+      const snapshot = await getDocs(q);
+      const bookedTimes = snapshot.docs.map(doc => doc.data().time);
+      document.querySelectorAll(".timeslot").forEach(div => {
+        if (bookedTimes.includes(div.innerText)) {
+          div.classList.add("disabled");
+          div.onclick = null;
+        }
+      });
+    };
+
+    dateInput.addEventListener("change", async (e) => {
+      selectedDate = e.target.value;
       generateSlots();
+      await disableBookedSlots(selectedDate);
+      detailsForm.style.display = "none";
+      bookBtn.style.display = "none";
+      selectedTime = null;
     });
 
-    nextBtn.addEventListener("click", () => {
-      document.getElementById("step1").classList.add("hidden");
-      bookingForm.classList.remove("hidden");
-    });
-
-    bookingForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
+    // 🔹 Save booking
+    bookBtn.addEventListener("click", async () => {
+      if (!selectedDate || !selectedTime) {
+        alert("Please select a date and time slot");
+        return;
+      }
       try {
-        await addDoc(collection(db, "bookings"), {
-          name: bookingForm.name.value,
-          email: bookingForm.email.value,
-          phone: bookingForm.phone.value,
-          pickup: bookingForm.pickup.value,
-          flight: bookingForm.flight.value,
-          passengers: bookingForm.passengers.value,
-          checkin: bookingForm.checkin.value,
-          carryon: bookingForm.carryon.value,
+        await addDoc(bookingsRef, {
           date: selectedDate,
-          time: selectedSlot,
-          createdAt: new Date()
+          time: selectedTime,
+          name: document.getElementById("name").value,
+          phone: document.getElementById("phone").value,
+          email: document.getElementById("email").value,
+          pickup: document.getElementById("pickup").value,
+          flight: document.getElementById("flight").value,
+          passengers: document.getElementById("passengers").value,
+          checkin: document.getElementById("checkin").value,
+          carryon: document.getElementById("carryon").value,
+          createdAt: new Date().toISOString()
         });
-        statusMessage.textContent = "✅ Booking confirmed!";
-        statusMessage.style.color = "green";
-        bookingForm.reset();
+        alert("✅ Booking confirmed!");
+        location.reload();
       } catch (err) {
-        console.error("Error saving booking", err);
-        statusMessage.textContent = "❌ Failed to save booking.";
-        statusMessage.style.color = "red";
+        console.error(err);
+        alert("❌ Failed to save booking.");
       }
     });
   </script>
