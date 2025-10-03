@@ -15,33 +15,49 @@ body {
 }
 .container {
   display: flex;
+  flex-direction: row; /* default side by side */
   border: 2px solid #999;
   background: #fff; /* white inside container */
   max-width: 1200px;
   width: 100%;
   height: 90vh;
-  overflow: hidden;/* keep this for rounded edges */
+  overflow: hidden; /* keep rounded corners clean */
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
-} 
+}
 .left, .right {
-  height: 100%;
   padding: 30px;
-  overflow-y: auto;         /* each pane scrolls independently */
-  box-sizing: border-box;   /* ensure padding doesn’t cut content */
-  padding-bottom: 20px;     /* 👈 add breathing room so last line is visible */
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding-bottom: 20px; /* so last line is visible */
 }
 .left {
   flex: 0 0 400px;
   border-right: 1px solid #eee;
-  position: sticky;
-  top: 0;
 }
 .right {
   flex: 1;
-  overflow-y: auto;
   background: #fff;
 }
+
+/* Responsive Mobile Portrait */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    height: auto; /* allow natural height */
+  }
+  .left, .right {
+    flex: none;
+    height: auto;
+    max-height: none;
+  }
+  .left {
+    border-right: none;
+    border-bottom: 1px solid #eee;
+  }
+}
+
 h1 { font-size: 1.8rem; margin-bottom: 10px; }
 h2 { font-size: 1.2rem; color: #555; margin-bottom: 20px; }
 .section { margin-bottom: 25px; }
@@ -139,7 +155,7 @@ button:hover { background: #0056b3; }
     <ul>
       <li>📱 Call or Text: +1 (289) 830-8942</li>
       <li>💬 WhatsApp: +1 (289) 830-8942</li>
-      <li>🌐 Book using Booking Page: <a href="https://kamalthakor22.github.io/airport-transfer-booking" target="_blank">Airport Transfer Booking Page</a></li>
+      <li>🌐 Book using Calendly: <a href="https://calendly.com/kamalthakor/newbooking" target="_blank">calendly.com/kamalthakor/newbooking</a></li>
     </ul>
     <p>🚘 Safe • Punctual • Friendly Service</p>
     <p>🧼 Clean, smoke-free vehicle</p>
@@ -335,11 +351,3 @@ generateCalendar();
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
