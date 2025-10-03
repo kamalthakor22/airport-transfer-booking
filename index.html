@@ -31,7 +31,10 @@ body {
 .left {
   flex: 0 0 400px;
   border-right: 1px solid #eee;
+  overflow-y: auto;   /* allow scrolling */
+  height: 100%;       /* fill parent height */
 }
+
 .right {
   flex: 1;
   overflow-y: auto;
@@ -330,5 +333,6 @@ generateCalendar();
 </script>
 </body>
 </html>
+
 
 
