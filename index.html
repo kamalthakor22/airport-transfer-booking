@@ -1,1 +1,282 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <title>Pearson Airport Drop Booking</title> <style> body { font-family: Arial, sans-serif; background: #f9f9fb; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; /* prevent body scroll */ } .left, .right { flex: 1; padding: 30px; } .left { background: #fff; border-right: 1px solid #eee; position: sticky; /* make left pane sticky */ top: 0; height: 100vh; overflow-y: auto; /* allow left pane scrolling if content overflows */ } .right { background: #f9f9fb; overflow-y: auto; /* allow right pane scrolling */ height: 100vh; } h1 { font-size: 1.8rem; margin-bottom: 10px; } h2 { font-size: 1.2rem; color: #555; margin-bottom: 20px; } .section { margin-bottom: 25px; } .timeslot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-top: 10px; } .timeslot { padding: 10px; text-align: center; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; background: #fff; transition: all 0.2s; } .timeslot:hover { background: #eef5ff; border-color: #007bff; } .timeslot.selected { background: #007bff; color: white; font-weight: bold; } .timeslot.disabled { background: #f1f1f1; color: #aaa; border-color: #ccc; cursor: not-allowed; pointer-events: none; } input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; } button { padding: 12px 20px; border: none; background: #007bff; color: white; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: background 0.3s; } button:hover { background: #0056b3; } .highlight { font-weight: bold; color: #007bff; } </style> </head> <body> <!-- LEFT SIDE (Info Section) --> <div class="left"> <h1>Kamal Thakor</h1> <h2>Pearson Airport Drop Booking</h2> <p><strong>2 hr 30 min</strong></p> <p>Need a reliable and comfortable ride to Toronto Pearson Airport? I’ve got you covered!</p> <p>✅ Private 5-Seater SUV</p> <p>Fits 3 passengers comfortably with:</p> <ul> <li>3 large suitcases</li> <li>3 small carry-ons</li> </ul> <p>💰 Payment: Cash</p> <p>💰 Affordable Flat Rate: Based on the location (call +1 (289) 830-8942) and then book the date/time slot.</p> <p>📍 Pick-up Location: Ajax & surrounding areas</p> <p>📍 Drop-off: Toronto Pearson International Airport (YYZ)</p> <p>📆 Available 7 Days a Week – Early Morning to Late Night</p> <p>📝 How to Book:</p> <ul> <li>📱 Call or Text: +1 (289) 830-8942</li> <li>💬 WhatsApp: +1 (289) 830-8942</li> <li>🌐 Book using Calendly: <a href="https://calendly.com/kamalthakor/newbooking" target="_blank">calendly.com/kamalthakor/newbooking</a></li> </ul> <p>🚘 Safe • Punctual • Friendly Service</p> <p>🧼 Clean, smoke-free vehicle</p> <p>🎵 Music on request – start your trip right!</p> <p>👉 Book now and travel stress-free to the airport!</p> <hr /> <p><strong>📆 Selected Date:</strong> <span id="chosenDate" class="highlight">Not selected</span></p> <p><strong>⏰ Selected Time:</strong> <span id="chosenTime" class="highlight">Not selected</span></p> </div> <!-- RIGHT SIDE (Booking Form) --> <div class="right"> <div class="section"> <label for="date">Select Date</label> <input type="date" id="date" /> </div> <div class="section"> <label>Select Time</label> <div class="timeslot-grid" id="timeslotGrid"></div> </div> <div class="section" id="details" style="display:none;"> <label for="name">Full Name</label> <input type="text" id="name" required /> <label for="phone">Phone Number</label> <input type="text" id="phone" required /> <label for="email">Email</label> <input type="email" id="email" required /> <label for="pickup">Pickup Location (Complete Address)</label> <textarea id="pickup" required></textarea> <label for="flight">Flight Name & Number</label> <input type="text" id="flight" required /> <label for="passengers"># of Passengers</label> <input type="number" id="passengers" required /> <label for="checkin"># of Check-In Baggage (Large)</label> <input type="number" id="checkin" required /> <label for="carryon"># of Carry-On Baggage (Small)</label> <input type="number" id="carryon" required /> </div> <button id="bookBtn" style="display:none;">Book</button> </div> <script type="module"> import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"; import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"; const firebaseConfig = { apiKey: "AIzaSyBA4r1N4L_GwTrVrKku3lFYuj1gZIy-45w", authDomain: "ajaxairporttransfer.firebaseapp.com", projectId: "ajaxairporttransfer", storageBucket: "ajaxairporttransfer.firebasestorage.app", messagingSenderId: "664561343575", appId: "1:664561343575:web:3132b18dfa6ba41118d712" }; const app = initializeApp(firebaseConfig); const db = getFirestore(app); const bookingsRef = collection(db, "bookings"); const dateInput = document.getElementById("date"); const timeslotGrid = document.getElementById("timeslotGrid"); const detailsForm = document.getElementById("details"); const bookBtn = document.getElementById("bookBtn"); const chosenDateEl = document.getElementById("chosenDate"); const chosenTimeEl = document.getElementById("chosenTime"); let selectedDate = null; let selectedTime = null; const generateSlots = () => { timeslotGrid.innerHTML = ""; const slots = []; for (let h = 0; h <= 21; h++) { let hour = h % 12 === 0 ? 12 : h % 12; let ampm = h < 12 ? "AM" : "PM"; slots.push(${hour}:00 ${ampm}); } slots.forEach(slot => { const div = document.createElement("div"); div.classList.add("timeslot"); div.innerText = slot; div.onclick = () => selectSlot(div, slot); timeslotGrid.appendChild(div); }); }; const selectSlot = (div, slot) => { document.querySelectorAll(".timeslot").forEach(t => t.classList.remove("selected")); div.classList.add("selected"); selectedTime = slot; detailsForm.style.display = "block"; bookBtn.style.display = "block"; chosenTimeEl.innerText = slot; }; const disableBookedSlots = async (date) => { const q = query(bookingsRef, where("date", "==", date)); const snapshot = await getDocs(q); const bookedTimes = snapshot.docs.map(doc => doc.data().time); document.querySelectorAll(".timeslot").forEach(div => { if (bookedTimes.includes(div.innerText)) { div.classList.add("disabled"); div.onclick = null; } }); }; dateInput.addEventListener("change", async (e) => { selectedDate = e.target.value; chosenDateEl.innerText = selectedDate; generateSlots(); await disableBookedSlots(selectedDate); detailsForm.style.display = "none"; bookBtn.style.display = "none"; selectedTime = null; chosenTimeEl.innerText = "Not selected"; }); bookBtn.addEventListener("click", async () => { if (!selectedDate || !selectedTime) { alert("Please select a date and time slot"); return; } try { await addDoc(bookingsRef, { date: selectedDate, time: selectedTime, name: document.getElementById("name").value, phone: document.getElementById("phone").value, email: document.getElementById("email").value, pickup: document.getElementById("pickup").value, flight: document.getElementById("flight").value, passengers: document.getElementById("passengers").value, checkin: document.getElementById("checkin").value, carryon: document.getElementById("carryon").value, createdAt: new Date().toISOString() }); alert("✅ Booking confirmed!"); location.reload(); } catch (err) { console.error(err); alert("❌ Failed to save booking."); } }); </script> </body> </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pearson Airport Drop Booking</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9fb;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+    }
+    .left, .right {
+      flex: 1;
+      padding: 30px;
+      overflow-y: auto;
+    }
+    .left {
+      background: #fff;
+      border-right: 1px solid #eee;
+    }
+    .right {
+      background: #f9f9fb;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-size: 1.2rem;
+      color: #555;
+      margin-bottom: 20px;
+    }
+    .section {
+      margin-bottom: 25px;
+    }
+    .timeslot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .timeslot {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #fff;
+      transition: all 0.2s;
+    }
+    .timeslot:hover {
+      background: #eef5ff;
+      border-color: #007bff;
+    }
+    .timeslot.selected {
+      background: #007bff;
+      color: white;
+      font-weight: bold;
+    }
+    .timeslot.disabled {
+      background: #f1f1f1;
+      color: #aaa;
+      border-color: #ccc;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    button {
+      padding: 12px 20px;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #007bff;
+    }
+  </style>
+</head>
+<body>
+  <!-- LEFT SIDE (Info Section) -->
+  <div class="left">
+    <h1>Kamal Thakor</h1>
+    <h2>Pearson Airport Drop Booking</h2>
+    <p><strong>2 hr 30 min</strong></p>
+    <p>Need a reliable and comfortable ride to Toronto Pearson Airport? I’ve got you covered!</p>
+
+    <p>✅ Private 5-Seater SUV</p>
+    <p>Fits 3 passengers comfortably with:</p>
+    <ul>
+      <li>3 large suitcases</li>
+      <li>3 small carry-ons</li>
+    </ul>
+
+    <p>💰 Payment: Cash</p>
+    <p>💰 Affordable Flat Rate: Based on the location (call +1 (289) 830-8942) and then book the date/time slot.</p>
+
+    <p>📍 Pick-up Location: Ajax & surrounding areas</p>
+    <p>📍 Drop-off: Toronto Pearson International Airport (YYZ)</p>
+
+    <p>📆 Available 7 Days a Week – Early Morning to Late Night</p>
+    <p>📝 How to Book:</p>
+    <ul>
+      <li>📱 Call or Text: +1 (289) 830-8942</li>
+      <li>💬 WhatsApp: +1 (289) 830-8942</li>
+      <li>🌐 Book using Calendly: <a href="https://calendly.com/kamalthakor/newbooking" target="_blank">calendly.com/kamalthakor/newbooking</a></li>
+    </ul>
+
+    <p>🚘 Safe • Punctual • Friendly Service</p>
+    <p>🧼 Clean, smoke-free vehicle</p>
+    <p>🎵 Music on request – start your trip right!</p>
+    <p>👉 Book now and travel stress-free to the airport!</p>
+
+    <hr />
+    <p><strong>📆 Selected Date:</strong> <span id="chosenDate" class="highlight">Not selected</span></p>
+    <p><strong>⏰ Selected Time:</strong> <span id="chosenTime" class="highlight">Not selected</span></p>
+  </div>
+
+  <!-- RIGHT SIDE (Booking Form) -->
+  <div class="right">
+    <div class="section">
+      <label for="date">Select Date</label>
+      <input type="date" id="date" />
+    </div>
+
+    <div class="section">
+      <label>Select Time</label>
+      <div class="timeslot-grid" id="timeslotGrid"></div>
+    </div>
+
+    <div class="section" id="details" style="display:none;">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" required />
+
+      <label for="phone">Phone Number</label>
+      <input type="text" id="phone" required />
+
+      <label for="email">Email</label>
+      <input type="email" id="email" required />
+
+      <label for="pickup">Pickup Location (Complete Address)</label>
+      <textarea id="pickup" required></textarea>
+
+      <label for="flight">Flight Name & Number</label>
+      <input type="text" id="flight" required />
+
+      <label for="passengers"># of Passengers</label>
+      <input type="number" id="passengers" required />
+
+      <label for="checkin"># of Check-In Baggage (Large)</label>
+      <input type="number" id="checkin" required />
+
+      <label for="carryon"># of Carry-On Baggage (Small)</label>
+      <input type="number" id="carryon" required />
+    </div>
+
+    <button id="bookBtn" style="display:none;">Book</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, where, getDocs }
+      from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const bookingsRef = collection(db, "bookings");
+
+    const dateInput = document.getElementById("date");
+    const timeslotGrid = document.getElementById("timeslotGrid");
+    const detailsForm = document.getElementById("details");
+    const bookBtn = document.getElementById("bookBtn");
+    const chosenDateEl = document.getElementById("chosenDate");
+    const chosenTimeEl = document.getElementById("chosenTime");
+
+    let selectedDate = null;
+    let selectedTime = null;
+
+    const generateSlots = () => {
+      timeslotGrid.innerHTML = "";
+      const slots = [];
+      for (let h = 0; h <= 21; h++) {
+        let hour = h % 12 === 0 ? 12 : h % 12;
+        let ampm = h < 12 ? "AM" : "PM";
+        slots.push(`${hour}:00 ${ampm}`);
+      }
+      slots.forEach(slot => {
+        const div = document.createElement("div");
+        div.classList.add("timeslot");
+        div.innerText = slot;
+        div.onclick = () => selectSlot(div, slot);
+        timeslotGrid.appendChild(div);
+      });
+    };
+
+    const selectSlot = (div, slot) => {
+      document.querySelectorAll(".timeslot").forEach(t => t.classList.remove("selected"));
+      div.classList.add("selected");
+      selectedTime = slot;
+      detailsForm.style.display = "block";
+      bookBtn.style.display = "block";
+      chosenTimeEl.innerText = slot; // update left side
+    };
+
+    const disableBookedSlots = async (date) => {
+      const q = query(bookingsRef, where("date", "==", date));
+      const snapshot = await getDocs(q);
+      const bookedTimes = snapshot.docs.map(doc => doc.data().time);
+      document.querySelectorAll(".timeslot").forEach(div => {
+        if (bookedTimes.includes(div.innerText)) {
+          div.classList.add("disabled");
+          div.onclick = null;
+        }
+      });
+    };
+
+    dateInput.addEventListener("change", async (e) => {
+      selectedDate = e.target.value;
+      chosenDateEl.innerText = selectedDate; // update left side
+      generateSlots();
+      await disableBookedSlots(selectedDate);
+      detailsForm.style.display = "none";
+      bookBtn.style.display = "none";
+      selectedTime = null;
+      chosenTimeEl.innerText = "Not selected";
+    });
+
+    bookBtn.addEventListener("click", async () => {
+      if (!selectedDate || !selectedTime) {
+        alert("Please select a date and time slot");
+        return;
+      }
+      try {
+        await addDoc(bookingsRef, {
+          date: selectedDate,
+          time: selectedTime,
+          name: document.getElementById("name").value,
+          phone: document.getElementById("phone").value,
+          email: document.getElementById("email").value,
+          pickup: document.getElementById("pickup").value,
+          flight: document.getElementById("flight").value,
+          passengers: document.getElementById("passengers").value,
+          checkin: document.getElementById("checkin").value,
+          carryon: document.getElementById("carryon").value,
+          createdAt: new Date().toISOString()
+        });
+        alert("✅ Booking confirmed!");
+        location.reload();
+      } catch (err) {
+        console.error(err);
+        alert("❌ Failed to save booking.");
+      }
+    });
+  </script>
+</body>
+</html>
