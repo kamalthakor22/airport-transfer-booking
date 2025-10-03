@@ -45,7 +45,7 @@ body {
 @media (max-width: 768px) {
   .container {
     flex-direction: column;
-    height: auto; /* allow natural height */
+    height: auto; /* allow natural height */ /* let height grow naturally */
   }
   .left, .right {
     flex: none;
@@ -55,6 +55,8 @@ body {
   .left {
     border-right: none;
     border-bottom: 1px solid #eee;
+    max-height: 40vh;       /* 👈 shrink left pane */
+    overflow-y: auto;       /* still scrollable if content is long */
   }
 }
 
@@ -351,3 +353,4 @@ generateCalendar();
 </script>
 </body>
 </html>
+
