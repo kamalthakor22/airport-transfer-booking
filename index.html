@@ -1,137 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Pearson Airport Drop Booking</title>
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #ccc; /* grayish outside container */
-  margin: 0;
-  padding: 20px;
-  display: flex;
-  justify-content: center;
-}
-.container {
-  display: flex;
-  flex-direction: row; /* default side by side */
-  border: 2px solid #999;
-  background: #fff; /* white inside container */
-  max-width: 1200px;
-  width: 100%;
-  height: 90vh;
-  overflow: hidden; /* keep rounded corners clean */
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-.left, .right {
-  padding: 30px;
-  height: 100%;
-  overflow-y: auto;
-  box-sizing: border-box;
-  padding-bottom: 20px; /* so last line is visible */
-}
-.left {
-  flex: 0 0 400px;
-  border-right: 1px solid #eee;
-}
-.right {
-  flex: 1;
-  background: #fff;
-}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pearson Airport Drop Booking</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #ccc;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      display: flex;
+      border: 2px solid #999;
+      background: #fff;
+      max-width: 1200px;
+      width: 100%;
+      height: 90vh;
+      overflow: hidden;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .left, .right {
+      padding: 30px;
+      height: 100%;
+      overflow-y: auto;
+    }
+    .left {
+      flex: 0 0 400px;
+      border-right: 1px solid #eee;
+    }
+    .right {
+      flex: 1;
+      background: #fff;
+    }
+    h1 { font-size: 1.8rem; margin-bottom: 10px; }
+    h2 { font-size: 1.2rem; color: #555; margin-bottom: 20px; }
+    .section { margin-bottom: 25px; }
+    .timeslot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .timeslot {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #fff;
+      transition: all 0.2s;
+    }
+    .timeslot:hover { background: #eef5ff; border-color: #007bff; }
+    .timeslot.selected { background: #007bff; color: white; font-weight: bold; }
+    .timeslot.disabled { background: #f1f1f1; color: #aaa; border-color: #ccc; cursor: not-allowed; pointer-events: none; }
+    input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; }
+    button {
+      padding: 12px 20px;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover { background: #0056b3; }
+    .highlight { font-weight: bold; color: #007bff; }
 
-/* Responsive Mobile Portrait */
-@media (max-width: 768px) {
-  .container {
-    flex-direction: column;
-    height: auto; /* allow natural height */ /* let height grow naturally */
-  }
-  .left, .right {
-    flex: none;
-    height: auto;
-    max-height: none;
-  }
-  .left {
-    border-right: none;
-    border-bottom: 1px solid #eee;
-    max-height: 40vh;       /* 👈 shrink left pane */
-    overflow-y: auto;       /* still scrollable if content is long */
-  }
-}
+    /* Calendar styles */
+    .date-header { font-weight: bold; margin-bottom: 10px; }
+    #calendar-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    #calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+    .calendar-day {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      cursor: pointer;
+      position: relative;
+      background: #fff;
+      transition: background 0.2s;
+    }
+    .calendar-day:hover { background: #eef5ff; border-color: #007bff; }
+    .calendar-day.selected { background: #007bff; color: white; font-weight: bold; }
+    .calendar-day.disabled { background: #f1f1f1; color: #aaa; cursor: not-allowed; pointer-events: none; }
+    .calendar-day .dot {
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #007bff;
+    }
 
-h1 { font-size: 1.8rem; margin-bottom: 10px; }
-h2 { font-size: 1.2rem; color: #555; margin-bottom: 20px; }
-.section { margin-bottom: 25px; }
-.timeslot-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 10px;
-  margin-top: 10px;
-}
-.timeslot {
-  padding: 10px;
-  text-align: center;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  cursor: pointer;
-  background: #fff;
-  transition: all 0.2s;
-}
-.timeslot:hover { background: #eef5ff; border-color: #007bff; }
-.timeslot.selected { background: #007bff; color: white; font-weight: bold; }
-.timeslot.disabled { background: #f1f1f1; color: #aaa; border-color: #ccc; cursor: not-allowed; pointer-events: none; }
-input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; }
-button {
-  padding: 12px 20px;
-  border: none;
-  background: #007bff;
-  color: white;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-button:hover { background: #0056b3; }
-.highlight { font-weight: bold; color: #007bff; }
-
-/* Calendar styles */
-.date-header { font-weight: bold; margin-bottom: 10px; }
-#calendar-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-#calendar {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
-}
-.calendar-day {
-  padding: 10px;
-  text-align: center;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  cursor: pointer;
-  position: relative;
-  background: #fff;
-  transition: background 0.2s;
-}
-.calendar-day:hover { background: #eef5ff; border-color: #007bff; }
-.calendar-day.selected { background: #007bff; color: white; font-weight: bold; }
-.calendar-day.disabled { background: #f1f1f1; color: #aaa; cursor: not-allowed; pointer-events: none; }
-.calendar-day .dot {
-  position: absolute;
-  bottom: 5px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #007bff;
-}
-</style>
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        height: auto;
+      }
+      .left {
+        flex: 0 0 auto;
+        border-right: none;
+        border-bottom: 1px solid #eee;
+      }
+      .right {
+        flex: 1;
+      }
+    }
+  </style>
 </head>
 <body>
 <div class="container">
@@ -163,7 +156,7 @@ button:hover { background: #0056b3; }
     <p>🧼 Clean, smoke-free vehicle • In-Car Charging ports • Climate Temperate Control</p>
     <p>🎵 Music on request – start your trip right!</p>
     <p>👉 Book now and travel stress-free to the airport!</p>
-    <p> <strong>Urgent Booking?!? Within 30 minutes?</strong> Please Call • Additional 25% surcharge</p>
+    <p><strong>Urgent Booking?!? Within 30 minutes?</strong> Please Call • Additional 25% surcharge</p>
   </div>
 
   <!-- RIGHT SIDE -->
@@ -267,8 +260,9 @@ const generateCalendar = async () => {
     dayDiv.classList.add("calendar-day");
     const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
     dayDiv.innerText = day;
-    if(bookedDates.includes(dateStr)){ dayDiv.classList.add("disabled"); }
-    else{
+    if(bookedDates.includes(dateStr) || new Date(dateStr) < new Date(new Date().toDateString())) {
+      dayDiv.classList.add("disabled");
+    } else {
       const dot = document.createElement("div");
       dot.classList.add("dot");
       dayDiv.appendChild(dot);
@@ -282,13 +276,13 @@ const selectCalendarDay = (dayDiv, dateStr) => {
   document.querySelectorAll(".calendar-day").forEach(d=>d.classList.remove("selected"));
   dayDiv.classList.add("selected");
   selectedDate = dateStr;
-  chosenDateEl.innerText = dateStr;
+  chosenDateEl.innerText = dateStr; // 🔹 Update left pane live
   generateSlots();
   disableBookedSlots(selectedDate);
   detailsForm.style.display="none";
   bookBtn.style.display="none";
   selectedTime=null;
-  chosenTimeEl.innerText="Not selected";
+  chosenTimeEl.innerText="Not selected"; // 🔹 Reset time
 };
 
 prevBtn.onclick = () => { currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} generateCalendar(); };
@@ -314,7 +308,7 @@ const selectSlot = (div, slot) => {
   selectedTime = slot;
   detailsForm.style.display="block";
   bookBtn.style.display="block";
-  chosenTimeEl.innerText=slot;
+  chosenTimeEl.innerText=slot; // 🔹 Update left pane live
 };
 
 const disableBookedSlots = async (date)=>{
@@ -354,5 +348,3 @@ generateCalendar();
 </script>
 </body>
 </html>
-
-
