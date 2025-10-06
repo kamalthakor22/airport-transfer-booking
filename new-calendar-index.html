@@ -278,7 +278,16 @@ function renderTimeSlots() {
         document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
         slotEl.classList.add("selected");
         selectedTime = slot;
-        popupTime.textContent = selectedTime;
+
+        // Show and update popup
+        const popup = document.getElementById("popup");
+        popup.style.display = "flex"; // show popup
+        document.getElementById("popupDate").textContent = selectedDate.toDateString();
+        document.getElementById("popupTime").textContent = selectedTime;
+        document.getElementById("popupPassengers").textContent = "3"; // can be dynamic
+        document.getElementById("popupPickup").textContent = "Ajax & surrounding areas";
+
+        // Save to Firestore
         saveBooking();
       }
     });
@@ -287,6 +296,15 @@ function renderTimeSlots() {
   });
 }
 
+// Also show popup when a date is selected (before time)
+document.querySelectorAll(".day").forEach(d => {
+  d.addEventListener("click", () => {
+    const popup = document.getElementById("popup");
+    popup.style.display = "flex"; // show popup
+    document.getElementById("popupDate").textContent = selectedDate ? selectedDate.toDateString() : "Not selected";
+  });
+});
+  
 function saveBooking() {
   if (!selectedDate || !selectedTime) return;
   db.collection("bookings").add({
