@@ -24,7 +24,7 @@ body {
   height: 90vh;
   overflow: hidden;
   border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
 }
 .left, .right {
   padding: 30px;
@@ -39,7 +39,7 @@ body {
 }
 .right {
   flex: 1;
-  background: #fff;
+  background: #fefefe;
 }
 
 /* Responsive Mobile Portrait */
@@ -64,6 +64,7 @@ body {
 h1 { font-size: 1.8rem; margin-bottom: 10px; }
 h2 { font-size: 1.2rem; color: #555; margin-bottom: 20px; }
 .section { margin-bottom: 25px; }
+
 .timeslot-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -82,6 +83,7 @@ h2 { font-size: 1.2rem; color: #555; margin-bottom: 20px; }
 .timeslot:hover { background: #eef5ff; border-color: #007bff; }
 .timeslot.selected { background: #007bff; color: white; font-weight: bold; }
 .timeslot.disabled { background: #f1f1f1; color: #aaa; border-color: #ccc; cursor: not-allowed; pointer-events: none; }
+
 input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; }
 button {
   padding: 12px 20px;
@@ -96,7 +98,7 @@ button {
 button:hover { background: #0056b3; }
 .highlight { font-weight: bold; color: #007bff; }
 
-/* Calendar styles */
+/* Calendar */
 .date-header { font-weight: bold; margin-bottom: 10px; }
 #calendar-nav {
   display: flex;
@@ -117,7 +119,8 @@ button:hover { background: #0056b3; }
   cursor: pointer;
   position: relative;
   background: #fff;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  font-weight: bold;
 }
 .calendar-day:hover { background: #eef5ff; border-color: #007bff; }
 .calendar-day.selected { background: #007bff; color: white; font-weight: bold; }
@@ -127,31 +130,41 @@ button:hover { background: #0056b3; }
   bottom: 5px;
   left: 50%;
   transform: translateX(-50%);
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #007bff;
 }
 
-/* Popup top-right */
+/* Booking Summary Popup */
 #selectionPopup {
   position: fixed;
   top: 20px;
   right: 20px;
   background: rgba(0,123,255,0.5);
-  padding: 15px 20px;
-  border-radius: 8px;
   color: #fff;
+  min-width: 200px;
+  padding: 15px 20px;
+  border-radius: 10px;
   font-weight: bold;
   z-index: 9999;
-  min-width: 180px;
   display: none;
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+}
+#selectionPopup h4 {
+  margin: 0 0 10px 0;
+  font-size: 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.5);
+  padding-bottom: 5px;
+}
+#selectionPopup p {
+  margin: 5px 0;
 }
 </style>
 </head>
 <body>
 <div class="container">
-  <!-- LEFT SIDE -->
+  <!-- LEFT INFO PANE -->
   <div class="left">
     <p><strong>📆 Selected Date:</strong> <span id="chosenDate" class="highlight">Not selected</span></p>
     <p><strong>⏰ Selected Time:</strong> <span id="chosenTime" class="highlight">Not selected</span></p>
@@ -165,7 +178,7 @@ button:hover { background: #0056b3; }
       <li>3 small carry-ons</li>
     </ul>
     <p>💰 Payment: Cash</p>
-    <p>💰 Affordable Flat Rate: Based on the location (call +1 (289) 830-8942) and then book the date/time slot.</p>
+    <p>💰 Affordable Flat Rate: Based on the location (call +1 (289) 830-8942)</p>
     <p>📍 Pick-up Location: Ajax & surrounding areas</p>
     <p>📍 Drop-off: Toronto Pearson International Airport (YYZ)</p>
     <p>📆 Available 7 Days a Week – Early Morning to Late Night</p>
@@ -176,13 +189,12 @@ button:hover { background: #0056b3; }
       <li>🌐 Book using Booking Page: <a href="https://kamalthakor22.github.io/airport-transfer-booking" target="_blank">Airport Transfer Booking Page</a></li>
     </ul>
     <p>🚘 Safe • Punctual • Friendly Service • Trustworthy</p>
-    <p>🧼 Clean, smoke-free vehicle • In-Car Charging ports • Climate Temperate Control</p>
-    <p>🎵 Music on request – start your trip right!</p>
-    <p>👉 Book now and travel stress-free to the airport!</p>
-    <p><strong>Urgent Booking?!? Within 30 minutes?</strong> Please Call • Additional 25% surcharge</p>
+    <p>🧼 Clean, smoke-free vehicle • In-Car Charging ports • Climate Control</p>
+    <p>🎵 Music on request</p>
+    <p><strong>Urgent Booking (within 30 mins)?</strong> Call +25% surcharge</p>
   </div>
 
-  <!-- RIGHT SIDE -->
+  <!-- RIGHT BOOKING PANE -->
   <div class="right">
     <div class="section">
       <div class="date-header">Select a Date for Drop-Off</div>
@@ -200,29 +212,25 @@ button:hover { background: #0056b3; }
     </div>
 
     <div class="section" id="details" style="display:none;">
-      <label for="name">Full Name</label>
-      <input type="text" id="name" required />
-      <label for="phone">Phone Number</label>
-      <input type="text" id="phone" required />
-      <label for="email">Email</label>
-      <input type="email" id="email" required />
-      <label for="pickup">Pickup Location (Complete Address)</label>
-      <textarea id="pickup" required></textarea>
-      <label for="flight">Flight Name & Number</label>
-      <input type="text" id="flight" required />
-      <label for="passengers"># of Passengers</label>
-      <input type="number" id="passengers" required />
-      <label for="checkin"># of Check-In Baggage (Large)</label>
-      <input type="number" id="checkin" required />
-      <label for="carryon"># of Carry-On Baggage (Small)</label>
-      <input type="number" id="carryon" required />
+      <label for="name">Full Name</label><input type="text" id="name" required />
+      <label for="phone">Phone Number</label><input type="text" id="phone" required />
+      <label for="email">Email</label><input type="email" id="email" required />
+      <label for="pickup">Pickup Location (Complete Address)</label><textarea id="pickup" required></textarea>
+      <label for="flight">Flight Name & Number</label><input type="text" id="flight" required />
+      <label for="passengers"># of Passengers</label><input type="number" id="passengers" required />
+      <label for="checkin"># of Check-In Baggage (Large)</label><input type="number" id="checkin" required />
+      <label for="carryon"># of Carry-On Baggage (Small)</label><input type="number" id="carryon" required />
     </div>
-
     <button id="bookBtn" style="display:none;">Book</button>
   </div>
 </div>
 
-<div id="selectionPopup"></div>
+<!-- Booking Summary Popup -->
+<div id="selectionPopup">
+  <h4>Booking Summary</h4>
+  <p id="popupDate">Date: Not selected</p>
+  <p id="popupTime">Time: Not selected</p>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
@@ -241,11 +249,17 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const bookingsRef = collection(db, "bookings");
 
+const calendarEl = document.getElementById("calendar");
+const monthYearEl = document.getElementById("monthYear");
+const prevBtn = document.getElementById("prevMonth");
+const nextBtn = document.getElementById("nextMonth");
 const timeslotGrid = document.getElementById("timeslotGrid");
 const detailsForm = document.getElementById("details");
 const bookBtn = document.getElementById("bookBtn");
 const chosenDateEl = document.getElementById("chosenDate");
 const chosenTimeEl = document.getElementById("chosenTime");
+const popupDate = document.getElementById("popupDate");
+const popupTime = document.getElementById("popupTime");
 const selectionPopup = document.getElementById("selectionPopup");
 
 let selectedDate = null;
@@ -254,11 +268,7 @@ let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 let bookedDates = [];
 
-const monthYearEl = document.getElementById("monthYear");
-const calendarEl = document.getElementById("calendar");
-const prevBtn = document.getElementById("prevMonth");
-const nextBtn = document.getElementById("nextMonth");
-
+// Fetch bookings and mark fully booked days
 const fetchBookings = async () => {
   const snapshot = await getDocs(bookingsRef);
   const dateCount = {};
@@ -272,13 +282,14 @@ const fetchBookings = async () => {
   });
 };
 
+// Calendar generation
 const generateCalendar = async () => {
   await fetchBookings();
   calendarEl.innerHTML = "";
   const firstDay = new Date(currentYear, currentMonth,1).getDay();
   const daysInMonth = new Date(currentYear, currentMonth+1,0).getDate();
   monthYearEl.innerText = new Date(currentYear, currentMonth).toLocaleString('default', { month:'long', year:'numeric' });
-
+  
   for(let i=0;i<firstDay;i++){calendarEl.appendChild(document.createElement("div"));}
   for(let day=1; day<=daysInMonth; day++){
     const dayDiv = document.createElement("div");
@@ -296,9 +307,7 @@ const generateCalendar = async () => {
       dayDiv.appendChild(dot);
     }
 
-    dayDiv.onclick = () => {
-      if(!dayDiv.classList.contains("disabled")) selectCalendarDay(dayDiv, dateStr);
-    };
+    dayDiv.onclick = () => { if(!dayDiv.classList.contains("disabled")) selectCalendarDay(dayDiv, dateStr); };
     calendarEl.appendChild(dayDiv);
   }
 };
@@ -308,13 +317,15 @@ const selectCalendarDay = (dayDiv, dateStr) => {
   dayDiv.classList.add("selected");
   selectedDate = dateStr;
   chosenDateEl.innerText = dateStr;
+  popupDate.innerText = `Date: ${dateStr}`;
+  selectionPopup.style.display = "block";
   generateSlots();
   disableBookedSlots(selectedDate);
   detailsForm.style.display="none";
   bookBtn.style.display="none";
   selectedTime=null;
   chosenTimeEl.innerText="Not selected";
-  updatePopup();
+  popupTime.innerText = "Time: Not selected";
 };
 
 prevBtn.onclick = () => { currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} generateCalendar(); };
@@ -333,7 +344,6 @@ const generateSlots = () => {
     div.classList.add("timeslot");
     div.innerText = slot;
 
-    // Disable slots less than 1 hour from now if today
     if(slotTime < new Date(now.getTime() + 60*60*1000)){
       div.classList.add("disabled");
       div.onclick = null;
@@ -351,7 +361,7 @@ const selectSlot = (div, slot) => {
   detailsForm.style.display="block";
   bookBtn.style.display="block";
   chosenTimeEl.innerText=slot;
-  updatePopup();
+  popupTime.innerText = `Time: ${slot}`;
 };
 
 const disableBookedSlots = async (date)=>{
@@ -364,13 +374,6 @@ const disableBookedSlots = async (date)=>{
       div.onclick = null;
     }
   });
-};
-
-const updatePopup = () => {
-  if(selectedDate && selectedTime){
-    selectionPopup.style.display="block";
-    selectionPopup.innerText = `Selected:\nDate: ${selectedDate}\nTime: ${selectedTime}`;
-  }
 };
 
 bookBtn.addEventListener("click", async ()=>{
