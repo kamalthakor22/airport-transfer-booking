@@ -1,354 +1,400 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pearson Airport Drop Booking</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      overflow: hidden;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pearson Airport Drop Booking</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #ccc;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+.container {
+  display: flex;
+  flex-direction: row;
+  border: 2px solid #999;
+  background: #fff;
+  max-width: 1200px;
+  width: 100%;
+  height: 90vh;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.left, .right {
+  padding: 30px;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding-bottom: 20px;
+}
+.left {
+  flex: 0 0 400px;
+  border-right: 1px solid #eee;
+}
+.right {
+  flex: 1;
+  background: #fff;
+}
 
-    .container {
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
+/* Responsive Mobile Portrait */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    height: auto;
+  }
+  .left, .right {
+    flex: none;
+    height: auto;
+    max-height: none;
+  }
+  .left {
+    border-right: none;
+    border-bottom: 1px solid #eee;
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+}
 
-    .left, .right {
-      flex: 1;
-      padding: 30px;
-      overflow-y: auto;
-      box-sizing: border-box;
-    }
+h1 { font-size: 1.8rem; margin-bottom: 10px; }
+h2 { font-size: 1.2rem; color: #555; margin-bottom: 20px; }
+.section { margin-bottom: 25px; }
+.timeslot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+.timeslot {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  background: #fff;
+  transition: all 0.2s;
+}
+.timeslot:hover { background: #eef5ff; border-color: #007bff; }
+.timeslot.selected { background: #007bff; color: white; font-weight: bold; }
+.timeslot.disabled { background: #f1f1f1; color: #aaa; border-color: #ccc; cursor: not-allowed; pointer-events: none; }
+input, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; }
+button {
+  padding: 12px 20px;
+  border: none;
+  background: #007bff;
+  color: white;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+button:hover { background: #0056b3; }
+.highlight { font-weight: bold; color: #007bff; }
 
-    .left {
-      background: white;
-    }
+/* Calendar styles */
+.date-header { font-weight: bold; margin-bottom: 10px; }
+#calendar-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+#calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+.calendar-day {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  background: #fff;
+  transition: background 0.2s;
+}
+.calendar-day:hover { background: #eef5ff; border-color: #007bff; }
+.calendar-day.selected { background: #007bff; color: white; font-weight: bold; }
+.calendar-day.disabled { background: #f1f1f1; color: #aaa; cursor: not-allowed; pointer-events: none; }
+.calendar-day .dot {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #007bff;
+}
 
-    .right {
-      background: #fafafa;
-    }
-
-    h1 {
-      margin-top: 0;
-    }
-
-    ul {
-      padding-left: 20px;
-    }
-
-    .highlight {
-      color: #0077cc;
-      font-weight: bold;
-    }
-
-    /* Calendar styling */
-    .calendar {
-      max-width: 400px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-
-    .calendar-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #0077cc;
-      color: white;
-      padding: 15px;
-      font-size: 18px;
-    }
-
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
-      padding: 10px;
-    }
-
-    .day {
-      text-align: center;
-      padding: 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      position: relative;
-    }
-
-    .day.disabled {
-      color: #ccc;
-      cursor: not-allowed;
-    }
-
-    .day:hover:not(.disabled) {
-      background: #e6f2ff;
-    }
-
-    .day.selected {
-      background: #0077cc;
-      color: white;
-    }
-
-    .dot {
-      width: 6px;
-      height: 6px;
-      background: #0077cc;
-      border-radius: 50%;
-      position: absolute;
-      bottom: 5px;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-
-    .time-slots {
-      margin-top: 20px;
-      text-align: center;
-    }
-
-    .time-slot {
-      display: inline-block;
-      margin: 5px;
-      padding: 8px 15px;
-      background: #e6f2ff;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .time-slot.disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-
-    .time-slot.selected {
-      background: #0077cc;
-      color: white;
-    }
-
-    /* Popup notification */
-    .popup {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #0077cc;
-      color: white;
-      padding: 15px 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      opacity: 0;
-      transform: translateY(-20px);
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      z-index: 999;
-    }
-
-    .popup.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-      .container {
-        flex-direction: column;
-      }
-
-      .left {
-        flex: none;
-        height: 45vh;
-      }
-
-      .right {
-        flex: 1;
-        height: 55vh;
-      }
-    }
-  </style>
+/* Popup top-right */
+#selectionPopup {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0,123,255,0.5);
+  padding: 15px 20px;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: bold;
+  z-index: 9999;
+  min-width: 180px;
+  display: none;
+}
+</style>
 </head>
 <body>
-  <div class="popup" id="popup">Selected Date and Time</div>
-
-  <div class="container">
-    <div class="left">
-      <p><strong>📆 Selected Date:</strong> <span id="chosenDate" class="highlight">Not selected</span></p>
-      <p><strong>⏰ Selected Time:</strong> <span id="chosenTime" class="highlight">Not selected</span></p>
-      <h1>Pearson Airport Drop Booking</h1>
-      <p><strong>Total Time: 2 hr 30 min</strong></p>
-      <p>Need a reliable and comfortable ride to Toronto Pearson Airport? I’ve got you covered!</p>
-      <p>✅ Private 5-Seater SUV</p>
-      <p>Fits 3 passengers comfortably with:</p>
-      <ul>
-        <li>3 large suitcases</li>
-        <li>3 small carry-ons</li>
-      </ul>
-      <p>💰 Payment: Cash</p>
-      <p>💰 Affordable Flat Rate: Based on the location (call +1 (289) 830-8942) and then book the date/time slot.</p>
-      <p>📍 Pick-up Location: Ajax & surrounding areas</p>
-      <p>📍 Drop-off: Toronto Pearson International Airport (YYZ)</p>
-      <p>📆 Available 7 Days a Week – Early Morning to Late Night</p>
-      <p>📝 How to Book:</p>
-      <ul>
-        <li>📱 Call or Text: +1 (289) 830-8942</li>
-        <li>💬 WhatsApp: +1 (289) 830-8942</li>
-        <li>🌐 Book using Booking Page: <a href="https://kamalthakor22.github.io/airport-transfer-booking" target="_blank">Airport Transfer Booking Page</a></li>
-      </ul>
-      <p>🚘 Safe • Punctual • Friendly Service • Trustworthy</p>
-      <p>🧼 Clean, smoke-free vehicle • In-Car Charging ports • Climate Temperate Control</p>
-      <p>🎵 Music on request – start your trip right!</p>
-      <p>👉 Book now and travel stress-free to the airport!</p>
-      <p><strong>Urgent Booking?!? Within 30 minutes?</strong> Please Call • Additional 25% surcharge</p>
-    </div>
-
-    <div class="right">
-      <div class="calendar">
-        <div class="calendar-header">
-          <button id="prevMonth">&lt;</button>
-          <div id="monthYear"></div>
-          <button id="nextMonth">&gt;</button>
-        </div>
-        <div class="calendar-grid" id="calendarGrid"></div>
-      </div>
-      <div class="time-slots" id="timeSlots"></div>
-    </div>
+<div class="container">
+  <!-- LEFT SIDE -->
+  <div class="left">
+    <p><strong>📆 Selected Date:</strong> <span id="chosenDate" class="highlight">Not selected</span></p>
+    <p><strong>⏰ Selected Time:</strong> <span id="chosenTime" class="highlight">Not selected</span></p>
+    <h1>Pearson Airport Drop Booking</h1>
+    <p><strong>Total Time: 2 hr 30 min</strong></p>
+    <p>Need a reliable and comfortable ride to Toronto Pearson Airport? I’ve got you covered!</p>
+    <p>✅ Private 5-Seater SUV</p>
+    <p>Fits 3 passengers comfortably with:</p>
+    <ul>
+      <li>3 large suitcases</li>
+      <li>3 small carry-ons</li>
+    </ul>
+    <p>💰 Payment: Cash</p>
+    <p>💰 Affordable Flat Rate: Based on the location (call +1 (289) 830-8942) and then book the date/time slot.</p>
+    <p>📍 Pick-up Location: Ajax & surrounding areas</p>
+    <p>📍 Drop-off: Toronto Pearson International Airport (YYZ)</p>
+    <p>📆 Available 7 Days a Week – Early Morning to Late Night</p>
+    <p>📝 How to Book:</p>
+    <ul>
+      <li>📱 Call or Text: +1 (289) 830-8942</li>
+      <li>💬 WhatsApp: +1 (289) 830-8942</li>
+      <li>🌐 Book using Booking Page: <a href="https://kamalthakor22.github.io/airport-transfer-booking" target="_blank">Airport Transfer Booking Page</a></li>
+    </ul>
+    <p>🚘 Safe • Punctual • Friendly Service • Trustworthy</p>
+    <p>🧼 Clean, smoke-free vehicle • In-Car Charging ports • Climate Temperate Control</p>
+    <p>🎵 Music on request – start your trip right!</p>
+    <p>👉 Book now and travel stress-free to the airport!</p>
+    <p><strong>Urgent Booking?!? Within 30 minutes?</strong> Please Call • Additional 25% surcharge</p>
   </div>
 
-  <script>
-    const calendarGrid = document.getElementById("calendarGrid");
-    const monthYear = document.getElementById("monthYear");
-    const prevMonthBtn = document.getElementById("prevMonth");
-    const nextMonthBtn = document.getElementById("nextMonth");
-    const chosenDateEl = document.getElementById("chosenDate");
-    const chosenTimeEl = document.getElementById("chosenTime");
-    const popup = document.getElementById("popup");
-    const timeSlotsEl = document.getElementById("timeSlots");
+  <!-- RIGHT SIDE -->
+  <div class="right">
+    <div class="section">
+      <div class="date-header">Select a Date for Drop-Off</div>
+      <div id="calendar-nav">
+        <button id="prevMonth">&lt; Prev</button>
+        <span id="monthYear"></span>
+        <button id="nextMonth">Next &gt;</button>
+      </div>
+      <div id="calendar"></div>
+    </div>
 
-    let currentDate = new Date();
-    let selectedDate = null;
-    let selectedTime = null;
-    let visibleMonth = currentDate.getMonth();
-    let visibleYear = currentDate.getFullYear();
+    <div class="section">
+      <div class="date-header">Select Time for Drop-Off</div>
+      <div class="timeslot-grid" id="timeslotGrid"></div>
+    </div>
 
-    const timeSlots = [];
-    for (let h = 0; h < 24; h += 2.5) {
-      let hour = Math.floor(h);
-      let minutes = (h % 1) * 60;
-      let ampm = hour >= 12 ? "PM" : "AM";
-      let displayHour = hour % 12 || 12;
-      let displayMinutes = minutes === 0 ? "00" : minutes;
-      timeSlots.push(`${displayHour}:${displayMinutes} ${ampm}`);
+    <div class="section" id="details" style="display:none;">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" required />
+      <label for="phone">Phone Number</label>
+      <input type="text" id="phone" required />
+      <label for="email">Email</label>
+      <input type="email" id="email" required />
+      <label for="pickup">Pickup Location (Complete Address)</label>
+      <textarea id="pickup" required></textarea>
+      <label for="flight">Flight Name & Number</label>
+      <input type="text" id="flight" required />
+      <label for="passengers"># of Passengers</label>
+      <input type="number" id="passengers" required />
+      <label for="checkin"># of Check-In Baggage (Large)</label>
+      <input type="number" id="checkin" required />
+      <label for="carryon"># of Carry-On Baggage (Small)</label>
+      <input type="number" id="carryon" required />
+    </div>
+
+    <button id="bookBtn" style="display:none;">Book</button>
+  </div>
+</div>
+
+<div id="selectionPopup"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBA4r1N4L_GwTrVrKku3lFYuj1gZIy-45w",
+  authDomain: "ajaxairporttransfer.firebaseapp.com",
+  projectId: "ajaxairporttransfer",
+  storageBucket: "ajaxairporttransfer.firebasestorage.app",
+  messagingSenderId: "664561343575",
+  appId: "1:664561343575:web:3132b18dfa6ba41118d712"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const bookingsRef = collection(db, "bookings");
+
+const timeslotGrid = document.getElementById("timeslotGrid");
+const detailsForm = document.getElementById("details");
+const bookBtn = document.getElementById("bookBtn");
+const chosenDateEl = document.getElementById("chosenDate");
+const chosenTimeEl = document.getElementById("chosenTime");
+const selectionPopup = document.getElementById("selectionPopup");
+
+let selectedDate = null;
+let selectedTime = null;
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+let bookedDates = [];
+
+const monthYearEl = document.getElementById("monthYear");
+const calendarEl = document.getElementById("calendar");
+const prevBtn = document.getElementById("prevMonth");
+const nextBtn = document.getElementById("nextMonth");
+
+const fetchBookings = async () => {
+  const snapshot = await getDocs(bookingsRef);
+  const dateCount = {};
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    dateCount[data.date] = dateCount[data.date] ? dateCount[data.date]+1 : 1;
+  });
+  bookedDates = [];
+  Object.keys(dateCount).forEach(date => {
+    if(dateCount[date]>=22) bookedDates.push(date);
+  });
+};
+
+const generateCalendar = async () => {
+  await fetchBookings();
+  calendarEl.innerHTML = "";
+  const firstDay = new Date(currentYear, currentMonth,1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth+1,0).getDate();
+  monthYearEl.innerText = new Date(currentYear, currentMonth).toLocaleString('default', { month:'long', year:'numeric' });
+
+  for(let i=0;i<firstDay;i++){calendarEl.appendChild(document.createElement("div"));}
+  for(let day=1; day<=daysInMonth; day++){
+    const dayDiv = document.createElement("div");
+    dayDiv.classList.add("calendar-day");
+    const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    dayDiv.innerText = day;
+    const today = new Date();
+    const dayDate = new Date(currentYear, currentMonth, day);
+
+    if(bookedDates.includes(dateStr) || dayDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())){
+      dayDiv.classList.add("disabled");
+    } else {
+      const dot = document.createElement("div");
+      dot.classList.add("dot");
+      dayDiv.appendChild(dot);
     }
 
-    function renderCalendar() {
-      calendarGrid.innerHTML = "";
-      const firstDay = new Date(visibleYear, visibleMonth, 1);
-      const lastDay = new Date(visibleYear, visibleMonth + 1, 0);
-      const startDay = firstDay.getDay();
-      const totalDays = lastDay.getDate();
+    dayDiv.onclick = () => {
+      if(!dayDiv.classList.contains("disabled")) selectCalendarDay(dayDiv, dateStr);
+    };
+    calendarEl.appendChild(dayDiv);
+  }
+};
 
-      monthYear.textContent = firstDay.toLocaleString("default", { month: "long", year: "numeric" });
+const selectCalendarDay = (dayDiv, dateStr) => {
+  document.querySelectorAll(".calendar-day").forEach(d=>d.classList.remove("selected"));
+  dayDiv.classList.add("selected");
+  selectedDate = dateStr;
+  chosenDateEl.innerText = dateStr;
+  generateSlots();
+  disableBookedSlots(selectedDate);
+  detailsForm.style.display="none";
+  bookBtn.style.display="none";
+  selectedTime=null;
+  chosenTimeEl.innerText="Not selected";
+  updatePopup();
+};
 
-      prevMonthBtn.disabled = visibleMonth === currentDate.getMonth() && visibleYear === currentDate.getFullYear();
+prevBtn.onclick = () => { currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} generateCalendar(); };
+nextBtn.onclick = () => { currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;} generateCalendar(); };
 
-      for (let i = 0; i < startDay; i++) {
-        const empty = document.createElement("div");
-        calendarGrid.appendChild(empty);
-      }
+const generateSlots = () => {
+  timeslotGrid.innerHTML="";
+  const now = new Date();
+  for(let h=0; h<=21; h++){
+    let hour = h%12===0?12:h%12;
+    let ampm = h<12?"AM":"PM";
+    const slotTime = new Date(selectedDate);
+    slotTime.setHours(h,0,0,0);
+    const slot = `${hour}:00 ${ampm}`;
+    const div = document.createElement("div");
+    div.classList.add("timeslot");
+    div.innerText = slot;
 
-      for (let day = 1; day <= totalDays; day++) {
-        const dayEl = document.createElement("div");
-        dayEl.className = "day";
-        dayEl.textContent = day;
-
-        const dateObj = new Date(visibleYear, visibleMonth, day);
-        const now = new Date();
-        dateObj.setHours(0,0,0,0);
-        now.setHours(0,0,0,0);
-
-        if (dateObj < now) {
-          dayEl.classList.add("disabled");
-        } else {
-          const dot = document.createElement("div");
-          dot.className = "dot";
-          dayEl.appendChild(dot);
-        }
-
-        dayEl.addEventListener("click", () => {
-          if (!dayEl.classList.contains("disabled")) {
-            document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-            dayEl.classList.add("selected");
-            selectedDate = new Date(visibleYear, visibleMonth, day);
-            chosenDateEl.textContent = selectedDate.toDateString();
-            renderTimeSlots();
-          }
-        });
-        calendarGrid.appendChild(dayEl);
-      }
+    // Disable slots less than 1 hour from now if today
+    if(slotTime < new Date(now.getTime() + 60*60*1000)){
+      div.classList.add("disabled");
+      div.onclick = null;
     }
 
-    function renderTimeSlots() {
-      timeSlotsEl.innerHTML = "";
-      const now = new Date();
-      timeSlots.forEach(slot => {
-        const [time, ampm] = slot.split(" ");
-        const [hour, minutes] = time.split(":").map(Number);
-        let slotDate = new Date(selectedDate);
-        let adjustedHour = ampm === "PM" && hour !== 12 ? hour + 12 : hour;
-        if (ampm === "AM" && hour === 12) adjustedHour = 0;
-        slotDate.setHours(adjustedHour, minutes);
+    div.onclick = ()=>selectSlot(div, slot);
+    timeslotGrid.appendChild(div);
+  }
+};
 
-        const slotEl = document.createElement("div");
-        slotEl.className = "time-slot";
-        slotEl.textContent = slot;
+const selectSlot = (div, slot) => {
+  document.querySelectorAll(".timeslot").forEach(t=>t.classList.remove("selected"));
+  div.classList.add("selected");
+  selectedTime = slot;
+  detailsForm.style.display="block";
+  bookBtn.style.display="block";
+  chosenTimeEl.innerText=slot;
+  updatePopup();
+};
 
-        if (selectedDate.toDateString() === now.toDateString() && slotDate < new Date(now.getTime() + 60 * 60 * 1000)) {
-          slotEl.classList.add("disabled");
-        }
-
-        slotEl.addEventListener("click", () => {
-          if (!slotEl.classList.contains("disabled")) {
-            document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
-            slotEl.classList.add("selected");
-            selectedTime = slot;
-            chosenTimeEl.textContent = selectedTime;
-            showPopup();
-          }
-        });
-
-        timeSlotsEl.appendChild(slotEl);
-      });
+const disableBookedSlots = async (date)=>{
+  const q = query(bookingsRef, where("date","==",date));
+  const snapshot = await getDocs(q);
+  const bookedTimes = snapshot.docs.map(doc=>doc.data().time);
+  document.querySelectorAll(".timeslot").forEach(div=>{
+    if(bookedTimes.includes(div.innerText)){
+      div.classList.add("disabled");
+      div.onclick = null;
     }
+  });
+};
 
-    function showPopup() {
-      popup.textContent = `✅ Selected: ${selectedDate.toDateString()} at ${selectedTime}`;
-      popup.classList.add("show");
-      setTimeout(() => popup.classList.remove("show"), 3000);
-    }
+const updatePopup = () => {
+  if(selectedDate && selectedTime){
+    selectionPopup.style.display="block";
+    selectionPopup.innerText = `Selected:\nDate: ${selectedDate}\nTime: ${selectedTime}`;
+  }
+};
 
-    prevMonthBtn.addEventListener("click", () => {
-      if (!(visibleMonth === currentDate.getMonth() && visibleYear === currentDate.getFullYear())) {
-        visibleMonth--;
-        if (visibleMonth < 0) {
-          visibleMonth = 11;
-          visibleYear--;
-        }
-        renderCalendar();
-      }
+bookBtn.addEventListener("click", async ()=>{
+  if(!selectedDate || !selectedTime){alert("Please select a date and time slot"); return;}
+  try{
+    await addDoc(bookingsRef,{
+      date:selectedDate,
+      time:selectedTime,
+      name:document.getElementById("name").value,
+      phone:document.getElementById("phone").value,
+      email:document.getElementById("email").value,
+      pickup:document.getElementById("pickup").value,
+      flight:document.getElementById("flight").value,
+      passengers:document.getElementById("passengers").value,
+      checkin:document.getElementById("checkin").value,
+      carryon:document.getElementById("carryon").value,
+      createdAt: new Date().toISOString()
     });
+    alert("✅ Booking confirmed!");
+    location.reload();
+  }catch(err){console.error(err); alert("❌ Failed to save booking.");}
+});
 
-    nextMonthBtn.addEventListener("click", () => {
-      visibleMonth++;
-      if (visibleMonth > 11) {
-        visibleMonth = 0;
-        visibleYear++;
-      }
-      renderCalendar();
-    });
-
-    renderCalendar();
-  </script>
+generateCalendar();
+</script>
 </body>
 </html>
