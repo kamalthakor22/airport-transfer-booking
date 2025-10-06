@@ -109,6 +109,14 @@ button:hover { background: #0056b3; }
   grid-template-columns: repeat(7, 1fr);
   gap: 5px;
 }
+/* ADDED: Day name styles */
+.day-name {
+  text-align: center;
+  font-weight: bold;
+  color: #555;
+  padding: 5px 0;
+}
+/* END ADDED */
 .calendar-day {
   padding: 10px;
   text-align: center;
@@ -267,13 +275,13 @@ let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 let bookedDates = [];
 
-// ADDED: Reference for "Now" to disable past dates/times
+// MODIFIED: Reference for "Now" to disable past dates/times
 const NOW = new Date();
 const TODAY_YEAR = NOW.getFullYear();
 const TODAY_MONTH = NOW.getMonth();
 const TODAY_DATE = NOW.getDate();
-const CURRENT_HOUR = NOW.getHours();
-// END ADDED
+const CURRENT_HOUR_24HR = NOW.getHours(); // Use 24-hr format for easy comparison
+// END MODIFIED
 
 const monthYearEl = document.getElementById("monthYear");
 const calendarEl = document.getElementById("calendar");
@@ -289,8 +297,6 @@ const fetchBookings = async () => {
   });
   bookedDates = [];
   Object.keys(dateCount).forEach(date => {
-    // Using 20 as the limit since 22 slots are generated (0-21) and we want some buffer.
-    // If you want to use 22, update this check.
     if(dateCount[date]>=20) bookedDates.push(date); 
   });
 };
@@ -299,11 +305,23 @@ const generateCalendar = async () => {
   await fetchBookings();
   calendarEl.innerHTML = "";
 
+  // ADDED: Day names for usability and layout fix
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  dayNames.forEach(name => {
+    const header = document.createElement("div");
+    header.innerText = name;
+    header.classList.add("day-name"); // Use new class for styling
+    calendarEl.appendChild(header);
+  });
+  // END ADDED
+
   const firstDay = new Date(currentYear, currentMonth,1).getDay();
   const daysInMonth = new Date(currentYear, currentMonth+1,0).getDate();
   monthYearEl.innerText = new Date(currentYear, currentMonth).toLocaleString('default', { month:'long', year:'numeric' });
 
+  // Skip the first few cells based on the day of the week
   for(let i=0;i<firstDay;i++){calendarEl.appendChild(document.createElement("div"));}
+  
   for(let day=1; day<=daysInMonth; day++){
     const dayDiv = document.createElement("div");
     dayDiv.classList.add("calendar-day");
@@ -311,6 +329,7 @@ const generateCalendar = async () => {
     dayDiv.innerText = day;
     
     // START MODIFIED/ADDED: Date disabling logic
+    // This logic ensures the current day is selectable, but past days are not.
     const dateIsPast = (currentYear < TODAY_YEAR) || 
                        (currentYear === TODAY_YEAR && currentMonth < TODAY_MONTH) ||
                        (currentYear === TODAY_YEAR && currentMonth === TODAY_MONTH && day < TODAY_DATE);
@@ -355,27 +374,28 @@ const formatDate = (dateStr) => {
   return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
 };
 
-// ADDED: Disable previous month button if showing past date
+// MODIFIED: Handle navigation and button check
 prevBtn.onclick = () => { 
   currentMonth--; 
   if(currentMonth<0){currentMonth=11; currentYear--;} 
   generateCalendar(); 
-  checkNavButtons(); // Check buttons after generation
+  checkNavButtons();
 };
 nextBtn.onclick = () => { 
   currentMonth++; 
   if(currentMonth>11){currentMonth=0; currentYear++;} 
   generateCalendar(); 
-  checkNavButtons(); // Check buttons after generation
+  checkNavButtons();
 };
 
-// ADDED: Check navigation buttons
+// MODIFIED: Check navigation buttons
 const checkNavButtons = () => {
-  const isCurrentMonthOrFuture = (currentYear > TODAY_YEAR) || 
-                                 (currentYear === TODAY_YEAR && currentMonth >= TODAY_MONTH);
-  prevBtn.disabled = !isCurrentMonthOrFuture;
-  prevBtn.style.opacity = isCurrentMonthOrFuture ? '1' : '0.5';
-  prevBtn.style.cursor = isCurrentMonthOrFuture ? 'pointer' : 'not-allowed';
+  // Disable prev if the current view is the current month and year
+  const isCurrentMonth = (currentYear === TODAY_YEAR && currentMonth === TODAY_MONTH);
+                                 
+  prevBtn.disabled = isCurrentMonth;
+  prevBtn.style.opacity = isCurrentMonth ? '0.5' : '1';
+  prevBtn.style.cursor = isCurrentMonth ? 'not-allowed' : 'pointer';
 };
 
 const generateSlots = () => {
@@ -398,18 +418,26 @@ const generateSlots = () => {
     // START MODIFIED/ADDED: Time disabling logic
     let isDisabled = false;
     if (isToday) {
-      // Time slots are in 24-hour format (h), check against current hour
-      if (h < CURRENT_HOUR) {
-        // Past hour on the current day
+      // Use a 1-hour lead time for regular bookings (60 minutes)
+      const leadTimeMinutes = 60; 
+      
+      // Calculate the minute threshold for the current hour 'h'
+      // Example: If h=12 (12:00 PM slot), it should be available until 11:00 AM (12:00 PM minus 60 min lead time).
+      // Since slots are only on the hour (X:00), we just compare the hours.
+      
+      // Determine the current time in minutes since midnight
+      const currentTimeInMinutes = CURRENT_HOUR_24HR * 60 + NOW.getMinutes();
+      
+      // Determine the slot time in minutes since midnight, minus the required lead time
+      const slotTimeMinusLead = (h * 60) - leadTimeMinutes;
+      
+      if (currentTimeInMinutes > slotTimeMinusLead) {
         isDisabled = true;
-      } else if (h === CURRENT_HOUR) {
-        // Current hour, disable if current minute is past 00, allowing the booking to be available now
-        // Assuming the user needs at least a few minutes, e.g., 30 minutes. 
-        // The slot is for X:00, so if it's X:30 now, X:00 is past.
-        if (NOW.getMinutes() > 0) {
-          isDisabled = true;
-        }
       }
+      
+      // If you want the 'Urgent Booking' surcharge (within 30 mins) to still be possible
+      // you can adjust the leadTimeMinutes here, but for disabling the slot, 
+      // using a buffer like 60 minutes is standard for pre-booked transport.
     }
 
     if (isDisabled) {
