@@ -87,34 +87,53 @@
   .time-slot.disabled { background: #ccc; cursor: not-allowed; }
   .time-slot.selected { background: #0077cc; color: white; }
 
-  /* Popup booking summary card */
+  /* Floating booking summary card (starts hidden off-left) */
   .popup {
     position: fixed;
     top: 20px;
-    right: 20px;
+    left: -360px;              /* off-screen start */
     width: 280px;
-    background: rgba(0, 119, 204, 0.85);
+    background: rgba(0, 119, 204, 0.95);
     color: white;
     padding: 15px 20px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     z-index: 999;
-    transition: all 0.3s ease;
+    transition: left 0.45s cubic-bezier(.2,.9,.2,1), opacity 0.3s ease;
+    opacity: 0;
+  }
+  .popup.show {
+    left: 20px;                /* visible position */
+    opacity: 1;
   }
   .popup h4 { margin: 0 0 10px 0; font-size: 16px; }
-  .popup p { margin: 5px 0; font-size: 14px; }
+  .popup p { margin: 6px 0; font-size: 14px; }
+
+  /* small close button */
+  .popup .close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    opacity: 0.85;
+  }
 
   /* Mobile */
   @media (max-width: 768px) {
     .container { flex-direction: column; }
     .left { flex: none; height: 45vh; }
     .right { flex: 1; height: 55vh; }
+    .popup { width: 260px; left: -320px; }
+    .popup.show { left: 10px; }
   }
 </style>
 </head>
 <body>
 
-<div class="popup" id="popup">
+<div class="popup" id="popup" aria-hidden="true">
+  <span class="close" id="popupClose" title="Close">&times;</span>
   <h4>Booking Summary</h4>
   <p>Date: <span id="popupDate">Not selected</span></p>
   <p>Time: <span id="popupTime">Not selected</span></p>
@@ -186,10 +205,12 @@ const monthYear = document.getElementById("monthYear");
 const prevMonthBtn = document.getElementById("prevMonth");
 const nextMonthBtn = document.getElementById("nextMonth");
 
+const popup = document.getElementById("popup");
 const popupDate = document.getElementById("popupDate");
 const popupTime = document.getElementById("popupTime");
 const popupPassengers = document.getElementById("popupPassengers");
 const popupPickup = document.getElementById("popupPickup");
+const popupClose = document.getElementById("popupClose");
 
 let currentDate = new Date();
 let selectedDate = null;
@@ -197,6 +218,7 @@ let selectedTime = null;
 let visibleMonth = currentDate.getMonth();
 let visibleYear = currentDate.getFullYear();
 
+/* time slots: every 1 hour */
 const timeSlots = [];
 for (let h = 0; h < 24; h++) {
   const hour = h % 12 === 0 ? 12 : h % 12;
@@ -212,11 +234,16 @@ function renderCalendar() {
   const totalDays = lastDay.getDate();
 
   monthYear.textContent = firstDay.toLocaleString("default", { month: "long", year: "numeric" });
-  prevMonthBtn.disabled = visibleMonth === currentDate.getMonth() && visibleYear === currentDate.getFullYear();
+
+  // preserve prevMonth disable behaviour
+  prevMonthBtn.disabled = (visibleMonth === currentDate.getMonth() && visibleYear === currentDate.getFullYear());
 
   for (let i = 0; i < startDay; i++) {
     calendarGrid.appendChild(document.createElement("div"));
   }
+
+  const now = new Date();
+  now.setHours(0,0,0,0);
 
   for (let day = 1; day <= totalDays; day++) {
     const dayEl = document.createElement("div");
@@ -225,20 +252,29 @@ function renderCalendar() {
 
     const dateObj = new Date(visibleYear, visibleMonth, day);
     dateObj.setHours(0,0,0,0);
-    const now = new Date();
-    now.setHours(0,0,0,0);
 
-    if (dateObj < now) dayEl.classList.add("disabled");
-    else dayEl.innerHTML += '<div class="dot"></div>';
+    if (dateObj < now) {
+      dayEl.classList.add("disabled");
+    } else {
+      dayEl.innerHTML += '<div class="dot"></div>';
+    }
 
     dayEl.addEventListener("click", () => {
-      if (!dayEl.classList.contains("disabled")) {
-        document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-        dayEl.classList.add("selected");
-        selectedDate = new Date(visibleYear, visibleMonth, day);
-        popupDate.textContent = selectedDate.toDateString();
-        renderTimeSlots();
-      }
+      if (dayEl.classList.contains("disabled")) return;
+
+      // select visual
+      document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+      dayEl.classList.add("selected");
+
+      selectedDate = new Date(visibleYear, visibleMonth, day);
+
+      // update popup date and show popup (slide in)
+      popupDate.textContent = selectedDate.toDateString();
+      popupTime.textContent = "Not selected";
+      selectedTime = null;
+      showPopup();
+
+      renderTimeSlots();
     });
 
     calendarGrid.appendChild(dayEl);
@@ -248,55 +284,83 @@ function renderCalendar() {
 function renderTimeSlots() {
   const timeSlotsEl = document.getElementById("timeSlots");
   timeSlotsEl.innerHTML = "";
+  if (!selectedDate) return;
+
   const now = new Date();
+
   timeSlots.forEach(slot => {
     const [time, ampm] = slot.split(" ");
     const [hour, minute] = time.split(":").map(Number);
     let slotDate = new Date(selectedDate);
     let adjustedHour = ampm === "PM" && hour !== 12 ? hour + 12 : hour;
     if (ampm === "AM" && hour === 12) adjustedHour = 0;
-    slotDate.setHours(adjustedHour, minute);
+    slotDate.setHours(adjustedHour, minute, 0, 0);
 
     const slotEl = document.createElement("div");
     slotEl.className = "time-slot";
     slotEl.textContent = slot;
 
-    if (selectedDate.toDateString() === now.toDateString() && slotDate < new Date(now.getTime() + 60*60*1000)) {
+    // disable if booking within next 1 hour (same-day)
+    const oneHourFromNow = new Date();
+    oneHourFromNow.setTime(Date.now() + 60*60*1000);
+    if (selectedDate.toDateString() === (new Date()).toDateString() && slotDate < oneHourFromNow) {
       slotEl.classList.add("disabled");
     }
 
     slotEl.addEventListener("click", () => {
-      if (!slotEl.classList.contains("disabled")) {
-        document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
-        slotEl.classList.add("selected");
-        selectedTime = slot;
-        popupTime.textContent = selectedTime;
-        saveBooking();
-      }
+      if (slotEl.classList.contains("disabled")) return;
+
+      document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
+      slotEl.classList.add("selected");
+
+      selectedTime = slot;
+      popupTime.textContent = selectedTime;
+
+      // ensure popup is visible if user selects time without clicking date again
+      showPopup();
+
+      saveBooking(); // write to Firestore
     });
 
     timeSlotsEl.appendChild(slotEl);
   });
 }
 
+function showPopup() {
+  if (!popup.classList.contains('show')) {
+    popup.classList.add('show');
+    popup.setAttribute('aria-hidden', 'false');
+  }
+}
+
+function hidePopup() {
+  if (popup.classList.contains('show')) {
+    popup.classList.remove('show');
+    popup.setAttribute('aria-hidden', 'true');
+  }
+}
+
+/* Save booking to Firestore (keeps your original fields) */
 function saveBooking() {
   if (!selectedDate || !selectedTime) return;
   db.collection("bookings").add({
     date: selectedDate.toDateString(),
     time: selectedTime,
-    passengers: 3,
-    pickup: "Ajax & surrounding areas",
+    passengers: parseInt(popupPassengers.textContent) || 3,
+    pickup: popupPickup.textContent || "Ajax & surrounding areas",
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(() => console.log("Booking saved!"))
-    .catch(err => console.error("Error saving booking:", err));
+  }).then(() => {
+    console.log("Booking saved!");
+    // optionally show a brief confirmation animation or toast here
+  }).catch(err => console.error("Error saving booking:", err));
 }
 
+/* navigation */
 prevMonthBtn.addEventListener("click", () => {
-  if (!(visibleMonth === currentDate.getMonth() && visibleYear === currentDate.getFullYear())) {
-    visibleMonth--;
-    if (visibleMonth < 0) { visibleMonth = 11; visibleYear--; }
-    renderCalendar();
-  }
+  if (visibleMonth === currentDate.getMonth() && visibleYear === currentDate.getFullYear()) return;
+  visibleMonth--;
+  if (visibleMonth < 0) { visibleMonth = 11; visibleYear--; }
+  renderCalendar();
 });
 nextMonthBtn.addEventListener("click", () => {
   visibleMonth++;
@@ -304,6 +368,10 @@ nextMonthBtn.addEventListener("click", () => {
   renderCalendar();
 });
 
+/* popup close handler */
+popupClose.addEventListener('click', hidePopup);
+
+/* initialize */
 renderCalendar();
 </script>
 </body>
