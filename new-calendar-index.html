@@ -205,12 +205,8 @@ const monthYear = document.getElementById("monthYear");
 const prevMonthBtn = document.getElementById("prevMonth");
 const nextMonthBtn = document.getElementById("nextMonth");
 
-const popup = document.getElementById("popup");
 const popupDate = document.getElementById("popupDate");
 const popupTime = document.getElementById("popupTime");
-const popupPassengers = document.getElementById("popupPassengers");
-const popupPickup = document.getElementById("popupPickup");
-const popupClose = document.getElementById("popupClose");
 
 let currentDate = new Date();
 let selectedDate = null;
@@ -218,7 +214,6 @@ let selectedTime = null;
 let visibleMonth = currentDate.getMonth();
 let visibleYear = currentDate.getFullYear();
 
-/* time slots: every 1 hour */
 const timeSlots = [];
 for (let h = 0; h < 24; h++) {
   const hour = h % 12 === 0 ? 12 : h % 12;
@@ -234,16 +229,9 @@ function renderCalendar() {
   const totalDays = lastDay.getDate();
 
   monthYear.textContent = firstDay.toLocaleString("default", { month: "long", year: "numeric" });
+  prevMonthBtn.disabled = visibleMonth === currentDate.getMonth() && visibleYear === currentDate.getFullYear();
 
-  // preserve prevMonth disable behaviour
-  prevMonthBtn.disabled = (visibleMonth === currentDate.getMonth() && visibleYear === currentDate.getFullYear());
-
-  for (let i = 0; i < startDay; i++) {
-    calendarGrid.appendChild(document.createElement("div"));
-  }
-
-  const now = new Date();
-  now.setHours(0,0,0,0);
+  for (let i = 0; i < startDay; i++) calendarGrid.appendChild(document.createElement("div"));
 
   for (let day = 1; day <= totalDays; day++) {
     const dayEl = document.createElement("div");
@@ -252,29 +240,20 @@ function renderCalendar() {
 
     const dateObj = new Date(visibleYear, visibleMonth, day);
     dateObj.setHours(0,0,0,0);
+    const now = new Date();
+    now.setHours(0,0,0,0);
 
-    if (dateObj < now) {
-      dayEl.classList.add("disabled");
-    } else {
-      dayEl.innerHTML += '<div class="dot"></div>';
-    }
+    if (dateObj < now) dayEl.classList.add("disabled");
+    else dayEl.innerHTML += '<div class="dot"></div>';
 
     dayEl.addEventListener("click", () => {
-      if (dayEl.classList.contains("disabled")) return;
-
-      // select visual
-      document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
-      dayEl.classList.add("selected");
-
-      selectedDate = new Date(visibleYear, visibleMonth, day);
-
-      // update popup date and show popup (slide in)
-      popupDate.textContent = selectedDate.toDateString();
-      popupTime.textContent = "Not selected";
-      selectedTime = null;
-      showPopup();
-
-      renderTimeSlots();
+      if (!dayEl.classList.contains("disabled")) {
+        document.querySelectorAll(".day").forEach(d => d.classList.remove("selected"));
+        dayEl.classList.add("selected");
+        selectedDate = new Date(visibleYear, visibleMonth, day);
+        popupDate.textContent = selectedDate.toDateString();
+        renderTimeSlots();
+      }
     });
 
     calendarGrid.appendChild(dayEl);
@@ -284,8 +263,6 @@ function renderCalendar() {
 function renderTimeSlots() {
   const timeSlotsEl = document.getElementById("timeSlots");
   timeSlotsEl.innerHTML = "";
-  if (!selectedDate) return;
-
   const now = new Date();
 
   timeSlots.forEach(slot => {
@@ -294,85 +271,139 @@ function renderTimeSlots() {
     let slotDate = new Date(selectedDate);
     let adjustedHour = ampm === "PM" && hour !== 12 ? hour + 12 : hour;
     if (ampm === "AM" && hour === 12) adjustedHour = 0;
-    slotDate.setHours(adjustedHour, minute, 0, 0);
+    slotDate.setHours(adjustedHour, minute);
 
     const slotEl = document.createElement("div");
     slotEl.className = "time-slot";
     slotEl.textContent = slot;
 
-    // disable if booking within next 1 hour (same-day)
-    const oneHourFromNow = new Date();
-    oneHourFromNow.setTime(Date.now() + 60*60*1000);
-    if (selectedDate.toDateString() === (new Date()).toDateString() && slotDate < oneHourFromNow) {
+    if (selectedDate.toDateString() === now.toDateString() && slotDate < new Date(now.getTime() + 60*60*1000)) {
       slotEl.classList.add("disabled");
     }
 
     slotEl.addEventListener("click", () => {
-      if (slotEl.classList.contains("disabled")) return;
-
-      document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
-      slotEl.classList.add("selected");
-
-      selectedTime = slot;
-      popupTime.textContent = selectedTime;
-
-      // ensure popup is visible if user selects time without clicking date again
-      showPopup();
-
-      saveBooking(); // write to Firestore
+      if (!slotEl.classList.contains("disabled")) {
+        document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
+        slotEl.classList.add("selected");
+        selectedTime = slot;
+        popupTime.textContent = selectedTime;
+        showBookingForm(slotEl);
+      }
     });
 
     timeSlotsEl.appendChild(slotEl);
   });
 }
 
-function showPopup() {
-  if (!popup.classList.contains('show')) {
-    popup.classList.add('show');
-    popup.setAttribute('aria-hidden', 'false');
-  }
+function showBookingForm(slotEl) {
+  // Remove any existing form
+  const existingForm = document.querySelector(".booking-form");
+  if (existingForm) existingForm.remove();
+
+  const form = document.createElement("form");
+  form.className = "booking-form";
+  form.innerHTML = `
+    <h4>Enter Booking Details</h4>
+    <label>Full Name</label>
+    <input type="text" id="fullName" required />
+    <label>Mobile Number</label>
+    <input type="tel" id="mobileNumber" required />
+    <label>Email Address</label>
+    <input type="email" id="emailAddress" required />
+    <label>Pickup Location</label>
+    <input type="text" id="pickupLocation" placeholder="e.g. 55 Kingston Rd, Ajax" required />
+    <div>
+      <label>Terminal:</label><br/>
+      <label><input type="radio" name="terminal" value="1" required /> T1</label>
+      <label><input type="radio" name="terminal" value="3" /> T3</label>
+    </div>
+    <label># of Passengers</label>
+    <input type="number" id="numPassengers" min="1" max="3" value="3" />
+    <label># of Large Bags</label>
+    <input type="number" id="numLargeBags" min="0" />
+    <label># of Small Bags</label>
+    <input type="number" id="numSmallBags" min="0" />
+    <button type="submit">Book Now</button>
+  `;
+
+  // Style the form (light, clean look)
+  form.style.background = "#fff";
+  form.style.marginTop = "15px";
+  form.style.padding = "15px";
+  form.style.border = "1px solid #ddd";
+  form.style.borderRadius = "8px";
+  form.style.boxShadow = "0 2px 6px rgba(0,0,0,0.1)";
+  form.style.textAlign = "left";
+
+  form.querySelectorAll("input").forEach(inp => {
+    inp.style.display = "block";
+    inp.style.width = "100%";
+    inp.style.marginBottom = "10px";
+    inp.style.padding = "8px";
+    inp.style.borderRadius = "6px";
+    inp.style.border = "1px solid #ccc";
+  });
+
+  form.querySelector("button").style.background = "#0077cc";
+  form.querySelector("button").style.color = "#fff";
+  form.querySelector("button").style.border = "none";
+  form.querySelector("button").style.padding = "10px 15px";
+  form.querySelector("button").style.borderRadius = "6px";
+  form.querySelector("button").style.cursor = "pointer";
+  form.querySelector("button").style.fontWeight = "bold";
+
+  slotEl.insertAdjacentElement("afterend", form);
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+  document.getElementById("fullName").focus();
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    saveBooking(form);
+  });
 }
 
-function hidePopup() {
-  if (popup.classList.contains('show')) {
-    popup.classList.remove('show');
-    popup.setAttribute('aria-hidden', 'true');
-  }
-}
-
-/* Save booking to Firestore (keeps your original fields) */
-function saveBooking() {
-  if (!selectedDate || !selectedTime) return;
-  db.collection("bookings").add({
+function saveBooking(form) {
+  const data = {
     date: selectedDate.toDateString(),
     time: selectedTime,
-    passengers: parseInt(popupPassengers.textContent) || 3,
-    pickup: popupPickup.textContent || "Ajax & surrounding areas",
+    fullName: form.fullName?.value || document.getElementById("fullName").value,
+    mobile: form.mobileNumber?.value || document.getElementById("mobileNumber").value,
+    email: form.emailAddress?.value || document.getElementById("emailAddress").value,
+    pickup: form.pickupLocation?.value || document.getElementById("pickupLocation").value,
+    terminal: form.querySelector('input[name="terminal"]:checked')?.value || "",
+    passengers: form.numPassengers?.value || document.getElementById("numPassengers").value,
+    largeBags: form.numLargeBags?.value || document.getElementById("numLargeBags").value,
+    smallBags: form.numSmallBags?.value || document.getElementById("numSmallBags").value,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(() => {
-    console.log("Booking saved!");
-    // optionally show a brief confirmation animation or toast here
-  }).catch(err => console.error("Error saving booking:", err));
+  };
+
+  db.collection("bookings").add(data)
+    .then(() => {
+      alert("✅ Booking successfully submitted!");
+      form.reset();
+    })
+    .catch(err => {
+      console.error("Error saving booking:", err);
+      alert("❌ Failed to save booking.");
+    });
 }
 
-/* navigation */
 prevMonthBtn.addEventListener("click", () => {
-  if (visibleMonth === currentDate.getMonth() && visibleYear === currentDate.getFullYear()) return;
-  visibleMonth--;
-  if (visibleMonth < 0) { visibleMonth = 11; visibleYear--; }
-  renderCalendar();
+  if (!(visibleMonth === currentDate.getMonth() && visibleYear === currentDate.getFullYear())) {
+    visibleMonth--;
+    if (visibleMonth < 0) { visibleMonth = 11; visibleYear--; }
+    renderCalendar();
+  }
 });
+
 nextMonthBtn.addEventListener("click", () => {
   visibleMonth++;
   if (visibleMonth > 11) { visibleMonth = 0; visibleYear++; }
   renderCalendar();
 });
 
-/* popup close handler */
-popupClose.addEventListener('click', hidePopup);
-
-/* initialize */
 renderCalendar();
 </script>
+
 </body>
 </html>
