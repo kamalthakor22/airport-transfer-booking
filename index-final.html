@@ -2,129 +2,229 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Pearson Airport Drop Booking</title>
+
+<!-- Styles -->
 <style>
-/* Layout + visual style (keeps your card look) */
-body {
-  font-family: Arial, sans-serif;
-  background: #ccc;
-  margin: 0;
-  padding: 20px;
-  display: flex;
-  justify-content: center;
-  position: relative;
-}
-.container {
-  display: flex;
-  flex-direction: row;
-  border: 2px solid #999;
-  background: #fff;
-  max-width: 1200px;
-  width: 100%;
-  height: 90vh;
-  overflow: hidden;
-  border-radius: 10px;
-  box-shadow: 0 0 12px rgba(0,0,0,0.12);
-}
-.left, .right {
-  padding: 30px;
-  height: 100%;
-  overflow-y: auto;
-  box-sizing: border-box;
-  padding-bottom: 20px;
-}
-.left {
-  flex: 0 0 400px;
-  border-right: 1px solid #eee;
-  background: #fff;
-}
-.right {
-  flex: 1;
-  background: #fff;
-}
+  :root{
+    --blue:#0b79d0;
+    --blue-strong:#0077cc;
+    --muted:#f3f4f6;
+    --card-bg: #fff;
+  }
+  body{
+    margin:0;
+    font-family: Arial, sans-serif;
+    background:#ccc;
+    padding:20px;
+    display:flex;
+    justify-content:center;
+  }
 
-/* mobile portrait */
-@media (max-width: 768px) {
-  .container { flex-direction: column; height: auto; }
-  .left, .right { flex: none; height: auto; }
-  .left { border-right: none; border-bottom: 1px solid #eee; max-height: 40vh; overflow-y: auto; }
-}
+  /* Container / Card look */
+  .container{
+    max-width:1200px;
+    width:100%;
+    height:90vh;
+    display:flex;
+    background:var(--card-bg);
+    border-radius:10px;
+    overflow:hidden;
+    border:2px solid #999;
+    box-shadow:0 6px 24px rgba(0,0,0,0.12);
+  }
 
-/* basic text */
-h1 { font-size: 1.8rem; margin-bottom: 10px; }
-.date-header { font-weight: bold; margin-bottom: 10px; }
-.highlight { font-weight: bold; color: #007bff; }
+  .left, .right {
+    padding:30px;
+    box-sizing:border-box;
+    height:100%;
+    overflow-y:auto;
+    padding-bottom:20px; /* make last line visible */
+  }
 
-/* calendar grid style (rounded boxes + dots) */
-#calendar-nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-#calendar { display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; }
-.calendar-day {
-  padding: 12px;
-  text-align:center;
-  border-radius:10px;
-  border:1px solid #e4e4e4;
-  background:#fff;
-  cursor:pointer;
-  position:relative;
-  transition: all .15s ease;
-  font-weight:600;
-}
-.calendar-day:hover { background:#eef7ff; border-color:#7fb1ff; }
-.calendar-day.disabled { background:#f3f3f3; color:#aaa; cursor:not-allowed; pointer-events:none; }
-.calendar-day.selected { background:#007bff; color:#fff; box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
-.calendar-day .dot { width:8px; height:8px; border-radius:50%; background:#007bff; position:absolute; bottom:6px; left:50%; transform:translateX(-50%); }
+  .left{
+    flex:0 0 400px;
+    border-right:1px solid #eee;
+    background:var(--card-bg);
+  }
+  .right{
+    flex:1;
+    background:var(--card-bg);
+  }
 
-/* timeslot grid */
-.timeslot-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:10px; margin-top:10px; }
-.timeslot {
-  padding:10px; border-radius:8px; border:1px solid #ddd; background:#fff; text-align:center; cursor:pointer; transition:all .12s;
-}
-.timeslot:hover { background:#eef7ff; border-color:#7fb1ff; }
-.timeslot.disabled { background:#f1f1f1; color:#999; cursor:not-allowed; pointer-events:none; }
-.timeslot.selected { background:#007bff; color:#fff; font-weight:bold; }
+  /* responsive mobile portrait: stack */
+  @media (max-width:768px) {
+    .container{flex-direction:column; height:auto;}
+    .left, .right {height:auto; max-height:none;}
+    .left{border-right:none; border-bottom:1px solid #eee; max-height:40vh; overflow-y:auto;}
+  }
 
-/* form */
-input, textarea { width:100%; padding:10px; margin-bottom:12px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; }
+  h1{font-size:1.8rem;margin:0 0 8px 0}
+  .highlight{color:var(--blue-strong);font-weight:bold}
+  .small{font-size:0.9rem;color:#666}
 
-/* book button */
-button.primary {
-  padding:12px 20px; border-radius:8px; border:none; background:#007bff; color:#fff; cursor:pointer; font-weight:600;
-}
-button.primary[disabled] { background:#9ec3ff; cursor:not-allowed; }
+  /* Calendar specific - header looks like your screenshot */
+  .calendar-card{
+    width:100%;
+    background:#fff;
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 6px 18px rgba(0,0,0,0.06);
+    border:1px solid #eee;
+  }
 
-/* popup summary - top-left fixed, 50% transparent background */
-#selectionPopup {
-  position: fixed;
-  top: 18px;
-  left: 18px; /* top-left as requested */
-  min-width: 220px;
-  z-index: 9999;
-  border-radius: 10px;
-  padding: 14px;
-  color: #fff;
-  background: rgba(0, 123, 255, 0.5); /* 50% transparent blue */
-  box-shadow: 0 8px 22px rgba(0,0,0,0.18);
-  display: none; /* shown once date selected */
-}
-#selectionPopup h4 { margin:0 0 8px 0; font-size:14px; }
-#selectionPopup p { margin:6px 0; font-size:13px; }
+  .cal-header{
+    background:var(--blue);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 18px;
+    font-weight:600;
+    font-size:18px;
+  }
+  .cal-nav-btn {
+    background:#fff;
+    color:var(--blue);
+    border-radius:6px;
+    width:34px;
+    height:34px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border: none;
+    cursor:pointer;
+    font-weight:700;
+    box-shadow:0 2px 6px rgba(0,0,0,0.08);
+  }
+  .cal-nav-btn:disabled { opacity:0.45; cursor:not-allowed; }
 
-/* small helper */
-.small { font-size:0.9rem; color:#666; }
+  .cal-body {
+    padding:16px;
+    background: #fff;
+  }
+
+  .weekday-row {
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+    margin-bottom:6px;
+    color:#444;
+    font-weight:600;
+    font-size:0.85rem;
+    text-align:center;
+  }
+
+  #calendar {
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:8px;
+  }
+
+  .calendar-day {
+    background:#fff;
+    border-radius:10px;
+    padding:10px 6px;
+    text-align:center;
+    cursor:pointer;
+    border:1px solid #efefef;
+    position:relative;
+    font-weight:600;
+    transition:all .12s;
+  }
+  .calendar-day:hover { background:#f0f8ff; border-color:#a6d0ff; transform: translateY(-2px); }
+  .calendar-day.disabled { background:#f6f6f6; color:#aaa; cursor:not-allowed; pointer-events:none; border-color:#eee; transform:none; }
+  .calendar-day.selected { background:var(--blue-strong); color:white; box-shadow:0 8px 22px rgba(0,0,0,0.12); }
+
+  /* dot for available day */
+  .calendar-day .dot {
+    width:8px; height:8px; border-radius:50%;
+    background:var(--blue-strong);
+    position:absolute;
+    left:50%; transform:translateX(-50%);
+    bottom:6px;
+  }
+
+  /* Timeslots */
+  .timeslot-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px,1fr));
+    gap:10px;
+    margin-top:12px;
+  }
+  .timeslot {
+    border-radius:8px;
+    padding:10px;
+    text-align:center;
+    cursor:pointer;
+    border:1px solid #e8e8e8;
+    background:#fff;
+    transition:all .12s;
+    font-weight:600;
+  }
+  .timeslot:hover { background:#f0f8ff; border-color:#a6d0ff; transform: translateY(-2px); }
+  .timeslot.disabled { background:#f3f3f3; color:#999; cursor:not-allowed; transform:none; }
+  .timeslot.selected { background:var(--blue-strong); color:#fff; box-shadow:0 8px 18px rgba(0,0,0,0.12); }
+
+  /* form styling */
+  input, textarea { width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-bottom:12px; }
+  label { display:block; margin-bottom:6px; font-weight:600; color:#333; }
+
+  .primary { background:var(--blue-strong); color:white; border:none; padding:12px 18px; border-radius:8px; cursor:pointer; font-weight:700; }
+  .primary[disabled]{ opacity:0.6; cursor:not-allowed; }
+
+  /* Selection popup (top-left fixed) : 50% transparent, text fully visible */
+  #selectionPopup {
+    position:fixed;
+    top:18px;
+    left:18px; /* top-left */
+    z-index:9999;
+    min-width:240px;
+    background: rgba(3,120,255,0.5); /* 50% transparent blue */
+    color:#fff;
+    padding:14px 16px;
+    border-radius:10px;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+    display:none;
+    font-weight:700;
+  }
+  #selectionPopup h4{ margin:0 0 8px 0; font-size:14px; }
+  #selectionPopup p{ margin:6px 0; font-weight:600; font-size:13px; }
+
+  /* toast */
+  #toast {
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    z-index:10000;
+    background:#222;
+    color:#fff;
+    padding:12px 16px;
+    border-radius:8px;
+    opacity:0;
+    transform: translateY(12px);
+    transition: opacity .25s, transform .25s;
+  }
+  #toast.show { opacity:1; transform: translateY(0); }
+
 </style>
 
-<!-- EmailJS SDK -->
+<!-- EmailJS SDK (required) -->
 <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 </head>
 <body>
+
+<!-- Container -->
 <div class="container">
-  <!-- LEFT (info) -->
+
+  <!-- LEFT PANE -->
   <div class="left">
     <p><strong>📆 Selected Date:</strong> <span id="chosenDate" class="highlight">Not selected</span></p>
     <p><strong>⏰ Selected Time:</strong> <span id="chosenTime" class="highlight">Not selected</span></p>
     <h1>Pearson Airport Drop Booking</h1>
     <p><strong>Total Time: 2 hr 30 min</strong></p>
+
     <p>Need a reliable and comfortable ride to Toronto Pearson Airport? I’ve got you covered!</p>
     <p>✅ Private 5-Seater SUV</p>
     <p>Fits 3 passengers comfortably with:</p>
@@ -132,49 +232,64 @@ button.primary[disabled] { background:#9ec3ff; cursor:not-allowed; }
       <li>3 large suitcases</li>
       <li>3 small carry-ons</li>
     </ul>
+
     <p>💰 Payment: Cash</p>
     <p>💰 Affordable Flat Rate: Based on the location (call +1 (289) 830-8942)</p>
     <p>📍 Pick-up Location: Ajax & surrounding areas</p>
     <p>📍 Drop-off: Toronto Pearson International Airport (YYZ)</p>
     <p class="small">📆 Available 7 Days a Week – Early Morning to Late Night</p>
-
-    <p class="small">📝 How to Book: Call/Text/WhatsApp: +1 (289) 830-8942 or use the booking form on the right.</p>
+    <p class="small">📝 How to Book: Call/Text/WhatsApp +1 (289) 830-8942 or use this form.</p>
   </div>
 
-  <!-- RIGHT (booking) -->
+  <!-- RIGHT PANE -->
   <div class="right">
-    <div class="section">
-      <div class="date-header">Select a Date for Drop-Off</div>
-      <div id="calendar-nav">
-        <button id="prevMonth">&lt; Prev</button>
-        <span id="monthYear" style="font-weight:700"></span>
-        <button id="nextMonth">Next &gt;</button>
+    <!-- Calendar card -->
+    <div class="calendar-card">
+      <div class="cal-header">
+        <button id="prevMonth" class="cal-nav-btn">&lt;</button>
+        <div id="monthYear">Month Year</div>
+        <button id="nextMonth" class="cal-nav-btn">&gt;</button>
       </div>
-      <div id="calendar"></div>
+
+      <div class="cal-body">
+        <div class="weekday-row">
+          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        </div>
+        <div id="calendar"></div>
+      </div>
     </div>
 
-    <div class="section">
+    <!-- Timeslots -->
+    <div style="margin-top:18px;">
       <div class="date-header">Select Time for Drop-Off</div>
       <div id="timeslotGrid" class="timeslot-grid"></div>
     </div>
 
-    <div class="section" id="details" style="display:none;">
+    <!-- Booking form -->
+    <div id="details" style="display:none; margin-top:18px;">
       <label for="name">Full Name</label>
-      <input id="name" type="text" required />
+      <input id="name" type="text" placeholder="Your full name" />
+
       <label for="phone">Phone Number</label>
-      <input id="phone" type="text" required />
+      <input id="phone" type="text" placeholder="+1 (555) 555-5555" />
+
       <label for="email">Email</label>
-      <input id="email" type="email" required />
+      <input id="email" type="email" placeholder="you@example.com" />
+
       <label for="pickup">Pickup Location (Complete Address)</label>
-      <textarea id="pickup" rows="3" required></textarea>
+      <textarea id="pickup" rows="2" placeholder="123 Street, City"></textarea>
+
       <label for="flight">Flight Name & Number</label>
-      <input id="flight" type="text" />
+      <input id="flight" type="text" placeholder="Airline - Flight #" />
+
       <label for="passengers"># of Passengers</label>
-      <input id="passengers" type="number" />
+      <input id="passengers" type="number" min="1" max="10" />
+
       <label for="checkin"># of Check-In Baggage (Large)</label>
-      <input id="checkin" type="number" />
+      <input id="checkin" type="number" min="0" />
+
       <label for="carryon"># of Carry-On Baggage (Small)</label>
-      <input id="carryon" type="number" />
+      <input id="carryon" type="number" min="0" />
     </div>
 
     <div style="margin-top:12px;">
@@ -183,19 +298,23 @@ button.primary[disabled] { background:#9ec3ff; cursor:not-allowed; }
   </div>
 </div>
 
-<!-- Floating Booking Summary (top-left) -->
-<div id="selectionPopup">
+<!-- Floating Booking Summary (top-left, semi-transparent) -->
+<div id="selectionPopup" aria-live="polite">
   <h4>Booking Summary</h4>
   <p id="popupDate">Date: Not selected</p>
   <p id="popupTime">Time: Not selected</p>
   <p id="popupName"></p>
   <p id="popupPhone"></p>
   <p id="popupEmail"></p>
-  <p id="popupStatus" style="margin-top:8px;"></p>
+  <p id="popupStatus"></p>
 </div>
 
+<!-- Toast -->
+<div id="toast">Booking saved and email sent ✅</div>
+
+<!-- Firebase + app logic -->
 <script type="module">
-// ---- Firebase init ----
+/* ------------- Firebase setup ------------- */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
@@ -212,7 +331,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const bookingsRef = collection(db, "bookings");
 
-// ---- EmailJS init ----
+/* ------------- EmailJS setup ------------- */
 /* You provided:
    service_id: service_y0kwolt
    template_id: template_a917qk4
@@ -222,14 +341,14 @@ const EMAILJS_SERVICE = 'service_y0kwolt';
 const EMAILJS_TEMPLATE = 'template_a917qk4';
 const EMAILJS_PUBLIC_KEY = 'Vfj2HuweC5ZvJKMtx';
 
-/* EmailJS global init (emailjs is loaded by <script src="...email.min.js">) */
+// initialize EmailJS (global emailjs provided by email.min.js)
 if (window.emailjs) {
-  window.emailjs.init(EMAILJS_PUBLIC_KEY);
+  try { window.emailjs.init(EMAILJS_PUBLIC_KEY); } catch(e) { /* already init possible */ }
 } else {
-  console.warn('EmailJS SDK not loaded — email sending will fail.');
+  console.warn('EmailJS SDK not loaded. Emails will fail.');
 }
 
-// ---- DOM refs ----
+/* ------------- DOM references ------------- */
 const calendarEl = document.getElementById('calendar');
 const monthYearEl = document.getElementById('monthYear');
 const prevBtn = document.getElementById('prevMonth');
@@ -237,6 +356,7 @@ const nextBtn = document.getElementById('nextMonth');
 const timeslotGrid = document.getElementById('timeslotGrid');
 const detailsForm = document.getElementById('details');
 const bookBtn = document.getElementById('bookBtn');
+
 const chosenDateEl = document.getElementById('chosenDate');
 const chosenTimeEl = document.getElementById('chosenTime');
 
@@ -248,7 +368,8 @@ const popupPhone = document.getElementById('popupPhone');
 const popupEmail = document.getElementById('popupEmail');
 const popupStatus = document.getElementById('popupStatus');
 
-// form inputs
+const toast = document.getElementById('toast');
+
 const inputName = document.getElementById('name');
 const inputPhone = document.getElementById('phone');
 const inputEmail = document.getElementById('email');
@@ -258,92 +379,93 @@ const inputPassengers = document.getElementById('passengers');
 const inputCheckin = document.getElementById('checkin');
 const inputCarryon = document.getElementById('carryon');
 
-// state
+/* ------------- State ------------- */
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
-let selectedDate = null; // YYYY-MM-DD string
-let selectedTime = null; // "HH:MM AM/PM"
-let bookedDates = []; // dates with >=22 bookings
+let selectedDate = null;   // YYYY-MM-DD
+let selectedTime = null;   // "H:MM AM/PM"
+let bookedDates = [];      // dates with >= 22 bookings
 
-// helper: format YYYY-MM-DD
-function toDateStr(y,m,d) {
-  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+/* ------------- Helpers ------------- */
+function toDateStr(y,m,d){ return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+
+function showToast(msg){
+  toast.textContent = msg || 'Booking saved and email sent ✅';
+  toast.classList.add('show');
+  setTimeout(()=> toast.classList.remove('show'), 4200);
 }
 
-// fetch bookings to compute bookedDates
-async function fetchBookings() {
-  try {
-    const snapshot = await getDocs(bookingsRef);
-    const dateCount = {};
-    snapshot.docs.forEach(doc => {
-      const data = doc.data();
+/* ------------- Fetch bookings to calculate fully booked days ------------- */
+async function fetchBookings(){
+  try{
+    const snap = await getDocs(bookingsRef);
+    const counts = {};
+    snap.docs.forEach(d => {
+      const data = d.data();
       if (!data || !data.date) return;
-      dateCount[data.date] = dateCount[data.date] ? dateCount[data.date] + 1 : 1;
+      counts[data.date] = counts[data.date] ? counts[data.date]+1 : 1;
     });
     bookedDates = [];
-    Object.keys(dateCount).forEach(dt => {
-      if (dateCount[dt] >= 22) bookedDates.push(dt);
-    });
-  } catch (err) {
+    Object.keys(counts).forEach(dt => { if (counts[dt] >= 22) bookedDates.push(dt); });
+  }catch(err){
     console.error('fetchBookings error', err);
     bookedDates = [];
   }
 }
 
-// generate calendar UI (keeps GitHub-like visual)
-async function generateCalendar() {
+/* ------------- Calendar rendering (GitHub style) ------------- */
+async function generateCalendar(){
   await fetchBookings();
   calendarEl.innerHTML = '';
-  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  monthYearEl.innerText = new Date(currentYear, currentMonth).toLocaleString('default', { month:'long', year:'numeric' });
+  const first = new Date(currentYear, currentMonth, 1);
+  const last = new Date(currentYear, currentMonth+1, 0);
+  const startDay = first.getDay();
+  const daysInMonth = last.getDate();
 
-  // disable prev if viewing current month/year
+  monthYearEl.textContent = first.toLocaleString('default',{month:'long', year:'numeric'});
+
+  // disable prev if current
   const today = new Date();
-  prevBtn.disabled = (currentMonth === today.getMonth() && currentYear === today.getFullYear());
+  prevBtn.disabled = (currentYear === today.getFullYear() && currentMonth === today.getMonth());
 
-  // filler blanks
-  for (let i = 0; i < firstDay; i++) {
+  // blanks for first week
+  for (let i=0;i<startDay;i++){
     const blank = document.createElement('div');
     calendarEl.appendChild(blank);
   }
 
-  // days
-  for (let d = 1; d <= daysInMonth; d++) {
+  for (let d=1; d<=daysInMonth; d++){
     const dayEl = document.createElement('div');
     dayEl.className = 'calendar-day';
     dayEl.innerText = d;
-    const dateStr = toDateStr(currentYear, currentMonth + 1, d);
+    const dateStr = toDateStr(currentYear, currentMonth+1, d);
     const dayDate = new Date(currentYear, currentMonth, d);
-    // zero time for day comparison
+    // check past and fully booked
     const today0 = new Date(); today0.setHours(0,0,0,0);
-
-    if (dayDate < today0 || bookedDates.includes(dateStr)) {
+    if (dayDate < today0 || bookedDates.includes(dateStr)){
       dayEl.classList.add('disabled');
     } else {
-      const dot = document.createElement('div');
-      dot.className = 'dot';
+      const dot = document.createElement('div'); dot.className='dot';
       dayEl.appendChild(dot);
     }
 
-    dayEl.addEventListener('click', () => {
+    dayEl.addEventListener('click', ()=> {
       if (dayEl.classList.contains('disabled')) return;
-      document.querySelectorAll('.calendar-day').forEach(c => c.classList.remove('selected'));
+      document.querySelectorAll('.calendar-day').forEach(c=>c.classList.remove('selected'));
       dayEl.classList.add('selected');
       selectedDate = dateStr;
       chosenDateEl.innerText = selectedDate;
       popupDate.innerText = `Date: ${selectedDate}`;
       selectionPopup.style.display = 'block';
-      popupStatus.innerText = ''; // clear prior status
-      // reset time and form visibility
+      popupStatus.innerText = '';
+      // reset time & form
       selectedTime = null;
       chosenTimeEl.innerText = 'Not selected';
       popupTime.innerText = 'Time: Not selected';
       detailsForm.style.display = 'none';
       bookBtn.style.display = 'none';
-      // generate available times
+      // render times and then disable booked slots
       generateSlotsForDate(selectedDate);
-      // disable already booked slots from DB
       disableBookedSlots(selectedDate);
     });
 
@@ -351,15 +473,13 @@ async function generateCalendar() {
   }
 }
 
-// generate timeslots for a date (hourly 0..21) and enforce now+1h rule
-function generateSlotsForDate(dateStr) {
+/* ------------- Timeslot generation (hourly 0..21) ------------- */
+function generateSlotsForDate(dateStr){
   timeslotGrid.innerHTML = '';
   const now = new Date();
-  // parse dateStr
   const [y,m,d] = dateStr.split('-').map(Number);
-  for (let h = 0; h <= 21; h++) {
-    // create slot time
-    const slotDate = new Date(y, m - 1, d, h, 0, 0, 0);
+  for (let h=0; h<=21; h++){
+    const slotDate = new Date(y, m-1, d, h, 0, 0, 0);
     const hour12 = h % 12 === 0 ? 12 : h % 12;
     const ampm = h < 12 ? 'AM' : 'PM';
     const label = `${hour12}:00 ${ampm}`;
@@ -368,25 +488,23 @@ function generateSlotsForDate(dateStr) {
     slotEl.className = 'timeslot';
     slotEl.innerText = label;
 
-    // disable if slot time < now + 1 hour (only if selected day is today)
-    const today0 = new Date(); today0.setHours(0,0,0,0);
+    // disable if slot is less than now + 1 hour (only for same day)
     const isToday = (slotDate.toDateString() === new Date().toDateString());
-    if (isToday && slotDate < new Date(now.getTime() + 60*60*1000)) {
+    if (isToday && slotDate < new Date(now.getTime() + 60*60*1000)){
       slotEl.classList.add('disabled');
     }
 
-    // click handler
-    slotEl.addEventListener('click', () => {
+    slotEl.addEventListener('click', ()=> {
       if (slotEl.classList.contains('disabled')) return;
-      document.querySelectorAll('.timeslot').forEach(s => s.classList.remove('selected'));
+      document.querySelectorAll('.timeslot').forEach(s=>s.classList.remove('selected'));
       slotEl.classList.add('selected');
       selectedTime = label;
       chosenTimeEl.innerText = selectedTime;
       popupTime.innerText = `Time: ${selectedTime}`;
-      // show form
+      // reveal form and book button
       detailsForm.style.display = 'block';
       bookBtn.style.display = 'inline-block';
-      // update popup contact info if available
+      // populate popup with any typed contact info
       popupName.innerText = inputName.value ? `Name: ${inputName.value}` : '';
       popupPhone.innerText = inputPhone.value ? `Phone: ${inputPhone.value}` : '';
       popupEmail.innerText = inputEmail.value ? `Email: ${inputEmail.value}` : '';
@@ -396,33 +514,32 @@ function generateSlotsForDate(dateStr) {
   }
 }
 
-// disable slots that are already booked for the selected date
-async function disableBookedSlots(dateStr) {
-  try {
-    const q = query(bookingsRef, where('date','==', dateStr));
-    const snapshot = await getDocs(q);
-    const bookedTimes = snapshot.docs.map(doc => doc.data().time);
-    // mark matching timeslots disabled
-    document.querySelectorAll('.timeslot').forEach(el => {
-      if (bookedTimes.includes(el.innerText)) {
+/* ------------- Disable already-booked times for the selected date ------------- */
+async function disableBookedSlots(dateStr){
+  try{
+    const q = query(bookingsRef, where('date','==',dateStr));
+    const snap = await getDocs(q);
+    const bookedTimes = snap.docs.map(d=>d.data().time);
+    document.querySelectorAll('.timeslot').forEach(el=>{
+      if (bookedTimes.includes(el.innerText)){
         el.classList.add('disabled');
-        // remove click handlers by cloning
+        // remove click handlers by replacing node
         const clone = el.cloneNode(true);
         el.parentNode.replaceChild(clone, el);
       }
     });
-  } catch (err) {
+  }catch(err){
     console.error('disableBookedSlots error', err);
   }
 }
 
-// Booking submit handler: save to Firestore, send EmailJS to two recipients, update popup, auto-clear after 30s
-bookBtn.addEventListener('click', async () => {
-  if (!selectedDate || !selectedTime) {
-    alert('Select date and time first');
+/* ------------- Booking submit: Firestore write + EmailJS sends + UI updates ------------- */
+bookBtn.addEventListener('click', async ()=> {
+  if (!selectedDate || !selectedTime){
+    alert('Please select a date and time first.');
     return;
   }
-  // read form
+
   const payload = {
     date: selectedDate,
     time: selectedTime,
@@ -437,32 +554,31 @@ bookBtn.addEventListener('click', async () => {
     createdAt: new Date().toISOString()
   };
 
-  try {
-    // Write to Firestore
+  try{
+    // Save booking to Firestore
     await addDoc(bookingsRef, payload);
 
-    // Update popup with confirmation + details
+    // Update popup details (confirmation)
     popupStatus.innerText = '✅ Booking confirmed!';
-    popupName.innerText = `Name: ${payload.name}`;
-    popupPhone.innerText = `Phone: ${payload.phone}`;
-    popupEmail.innerText = `Email: ${payload.email}`;
+    popupName.innerText = payload.name ? `Name: ${payload.name}` : '';
+    popupPhone.innerText = payload.phone ? `Phone: ${payload.phone}` : '';
+    popupEmail.innerText = payload.email ? `Email: ${payload.email}` : '';
 
-    // disable book button to avoid duplicate submissions until UI resets
     bookBtn.disabled = true;
 
-    // Send emails using EmailJS: send to customer and to kamalt@rocketmail.com
+    // Prepare EmailJS template params
     const templateParams = {
       from_name: payload.name || 'Guest',
       from_phone: payload.phone || '',
+      customer_email: payload.email || '',
       selected_date: payload.date,
       selected_time: payload.time,
-      customer_email: payload.email || '',
       pickup_location: payload.pickup || '',
       flight_info: payload.flight || '',
-      to_email: payload.email || '' // template should use this field in recipient or we call twice
+      to_email: payload.email || ''
     };
 
-    // send to customer (if email present)
+    // send to customer (if email available)
     try {
       if (payload.email && window.emailjs) {
         await window.emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
@@ -470,11 +586,11 @@ bookBtn.addEventListener('click', async () => {
           to_email: payload.email
         });
       }
-    } catch (e) {
+    } catch(e){
       console.warn('EmailJS customer send failed', e);
     }
 
-    // send to kamalt@rocketmail.com
+    // send to internal address
     try {
       if (window.emailjs) {
         await window.emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
@@ -482,26 +598,27 @@ bookBtn.addEventListener('click', async () => {
           to_email: 'kamalt@rocketmail.com'
         });
       }
-    } catch (e) {
+    } catch(e){
       console.warn('EmailJS internal send failed', e);
     }
 
-    // Visual feedback: keep popup visible, then auto-clear after 30 seconds
+    // Toast confirmation
+    showToast('Booking saved — confirmation email(s) sent.');
+
+    // Keep popup visible with confirmation, then auto-clear after 30s
     selectionPopup.style.display = 'block';
-    // start 30s timer to clear
-    setTimeout(() => {
+    setTimeout(()=> {
       clearPopupAndReset();
     }, 30000);
 
-  } catch (err) {
-    console.error('Booking save failed', err);
-    alert('Failed to save booking. Check console.');
+  }catch(err){
+    console.error('booking save error', err);
+    alert('Failed to save booking. Check console for details.');
   }
 });
 
-// clear popup and reset selection/form
-function clearPopupAndReset() {
-  // hide popup
+/* ------------- Clear UI & reset after confirmation ------------- */
+function clearPopupAndReset(){
   selectionPopup.style.display = 'none';
   popupDate.innerText = 'Date: Not selected';
   popupTime.innerText = 'Time: Not selected';
@@ -510,51 +627,66 @@ function clearPopupAndReset() {
   popupEmail.innerText = '';
   popupStatus.innerText = '';
 
-  // reset selections
-  selectedDate = null;
-  selectedTime = null;
+  // reset selections and form
+  selectedDate = null; selectedTime = null;
   chosenDateEl.innerText = 'Not selected';
   chosenTimeEl.innerText = 'Not selected';
   detailsForm.style.display = 'none';
   bookBtn.style.display = 'none';
   bookBtn.disabled = false;
 
-  // clear form
-  inputName.value = '';
-  inputPhone.value = '';
-  inputEmail.value = '';
-  inputPickup.value = '';
-  inputFlight.value = '';
-  inputPassengers.value = '';
-  inputCheckin.value = '';
-  inputCarryon.value = '';
+  inputName.value=''; inputPhone.value=''; inputEmail.value=''; inputPickup.value=''; inputFlight.value='';
+  inputPassengers.value=''; inputCheckin.value=''; inputCarryon.value='';
 
-  // regenerate calendar to refresh dots/booked status
+  // refresh calendar (to update fully-booked dots)
   generateCalendar();
 }
 
-// month navigation
-prevBtn.addEventListener('click', () => {
-  // prevent going before current month
+/* ------------- Month nav ------------- */
+prevBtn.addEventListener('click', ()=> {
   const today = new Date();
-  if (currentYear === today.getFullYear() && currentMonth === today.getMonth()) return;
+  if (currentYear === today.getFullYear() && currentMonth === today.getMonth()) return; // blocked
   currentMonth--;
   if (currentMonth < 0) { currentMonth = 11; currentYear--; }
   generateCalendar();
 });
-nextBtn.addEventListener('click', () => {
+nextBtn.addEventListener('click', ()=> {
   currentMonth++;
   if (currentMonth > 11) { currentMonth = 0; currentYear++; }
   generateCalendar();
 });
 
-// init
-// ensure emailjs global is available; the email.min.js script sets window.emailjs
-if (window.emailjs) {
-  try { window.emailjs.init(EMAILJS_PUBLIC_KEY); } catch(e){/* ignore if already inited */ }
-}
+/* ------------- Init ------------- */
 generateCalendar();
 
 </script>
+
+<!--
+  ---------------------------
+  EmailJS Template (recommended)
+  ---------------------------
+  Paste this into your EmailJS template editor (template_a917qk4)
+
+  Subject:
+    Booking Confirmation - Pearson Airport Drop
+
+  HTML Body:
+  <h2>✅ New Booking - Pearson Airport Drop</h2>
+  <p><strong>Name:</strong> {{from_name}}</p>
+  <p><strong>Phone:</strong> {{from_phone}}</p>
+  <p><strong>Email:</strong> {{customer_email}}</p>
+  <p><strong>Date:</strong> {{selected_date}}</p>
+  <p><strong>Time:</strong> {{selected_time}}</p>
+  <p><strong>Pickup Location:</strong> {{pickup_location}}</p>
+  <p><strong>Flight Info:</strong> {{flight_info}}</p>
+  <hr/>
+  <p>Please contact the customer to confirm pickup details.</p>
+  <p style="color:#666;font-size:12px;">This email was generated by the Ajax Airport Transfer booking site.</p>
+
+  Notes:
+  - Use {{to_email}} in the "To" field when using dynamic recipient or send twice (we do two sends here).
+  - Template variable names used in script: from_name, from_phone, customer_email, selected_date, selected_time, pickup_location, flight_info
+-->
+
 </body>
 </html>
